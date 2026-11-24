@@ -1,0 +1,17 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# RTL simulation results
+/results/
+
+# Synopsys generated outputs
+/synth/alib-*/
+/synth/command.log
+/synth/default.svf
+/synth/gate_timing_*/
+/synth/power_saif_*/
+/synth/logs/
+/synth/outputs/
+/synth/reports/
+/synth/work/

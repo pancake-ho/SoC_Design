@@ -1,10 +1,4 @@
-// EE470 functional slow baseline: eight-cycle serial multiply, no data/filter cache.
-`ifndef EE470_XQ_LANES
-`define EE470_XQ_LANES 1
-`endif
-`ifndef EE470_WQ_LANES
-`define EE470_WQ_LANES 1
-`endif
+// EE470 v9.3 NPU experiment using IDEC's tiled Winograd and shift-add ideas.
 `ifndef EE470_XQ_WORD
 `define EE470_XQ_WORD 0
 `endif
@@ -17,6 +11,7 @@
 `ifndef EE470_NPU_TIMEOUT
 `define EE470_NPU_TIMEOUT 262144
 `endif
+
 module npu(
     input clk, reset, start, clear, input [7:0] config_value,
     output busy, output reg done, error,
@@ -24,37 +19,49 @@ module npu(
     output reg [31:0] req_wdata, input req_ready, rsp_valid, rsp_error,
     input [31:0] rsp_rdata
 );
-    localparam IDLE=0, BIAS_REQ=1, BIAS_WAIT=2, X_REQ=3, X_WAIT=4,
-        W_REQ=5, W_WAIT=6, RAW_REQ=7, RAW_WAIT=8, Q_REQ=9, Q_WAIT=10, MUL=11;
+    localparam IDLE=4'd0, BIAS_REQ=4'd1, BIAS_WAIT=4'd2,
+        FILTER_REQ=4'd3, FILTER_WAIT=4'd4, FILTER_TRANSFORM=4'd5,
+        TILE_REQ=4'd6, TILE_WAIT=4'd7, TILE_START=4'd8, TILE_CALC=4'd9,
+        OUTPUT_PREP=4'd10, RAW_REQ=4'd11, RAW_WAIT=4'd12, Q_REQ=4'd13, Q_WAIT=4'd14;
+    localparam [10:0] X_BASE=`EE470_XQ_WORD, W_BASE=`EE470_WQ_WORD,
+        BIAS_BASE=`EE470_BIAS_WORD, RAW_BASE=11'd384, Q_BASE=11'd1168;
+    localparam [17:0] LAST_CYCLE=`EE470_NPU_TIMEOUT-1;
     reg [3:0] state;
-    reg [1:0] filter_index;
-    reg [3:0] output_row, output_col;
-    reg [9:0] output_index;
-    reg [3:0] kernel_index;
     reg [17:0] elapsed;
-    reg [5:0] access_wait;
+    reg [4:0] access_wait;
     reg [7:0] saved_config;
-    reg signed [7:0] x_value;
-    // signed32 bias plus nine signed16 products always fits signed33.
-    reg signed [32:0] accumulator;
+    reg [1:0] filter_index, output_slot;
+    reg [3:0] filter_slot, input_slot;
+    reg [2:0] tile_row, tile_col;
+    reg [9:0] filter_output_base;
+    reg signed [31:0] bias;
+    reg [71:0] filter_values;
+    reg [127:0] input_tile;
     reg [31:0] raw_result;
-    reg [7:0] multiplier_bits;
-    reg [15:0] multiplicand, partial_product;
-    reg [2:0] bit_index;
-    reg product_negative;
-    localparam X_LANES=`EE470_XQ_LANES, W_LANES=`EE470_WQ_LANES;
-    wire [7:0] x_index = (output_row+kernel_index/3)*16 + output_col+kernel_index%3;
-    wire [7:0] x_byte = rsp_rdata[(x_index % X_LANES)*8+:8];
-    wire [7:0] w_byte = rsp_rdata[(kernel_index % W_LANES)*8+:8];
-    wire [7:0] x_magnitude = x_value[7] ? (~x_value + 8'd1) : x_value;
-    wire [7:0] w_magnitude = w_byte[7] ? (~w_byte + 8'd1) : w_byte;
-    wire [15:0] next_product = partial_product + (multiplier_bits[0] ? multiplicand : 16'b0);
-    wire [15:0] signed_product = product_negative ? (~next_product + 16'd1) : next_product;
-    wire signed [32:0] extended_product = {{17{signed_product[15]}},signed_product};
-    wire signed [32:0] next_accumulator = accumulator + extended_product;
-    wire [31:0] narrowed_result = saved_config[1] && next_accumulator[32]!=next_accumulator[31] ?
-        (next_accumulator[32] ? 32'h80000000 : 32'h7fffffff) : next_accumulator[31:0];
+
+    wire [3:0] input_row = {tile_row,1'b0} + {2'b00,input_slot[3:2]};
+    wire [3:0] input_col = {tile_col,1'b0} + {2'b00,input_slot[1:0]};
+    wire [3:0] output_row = {tile_row,output_slot[1]};
+    wire [3:0] output_col = {tile_col,output_slot[0]};
+    wire [10:0] filter_word = W_BASE + filter_index*11'd9 + {7'b0,filter_slot};
+    wire [10:0] output_index = {1'b0,filter_output_base} + output_row*11'd14 + {7'b0,output_col};
+    wire awaiting_response = state==BIAS_WAIT || state==FILTER_WAIT ||
+                             state==TILE_WAIT || state==RAW_WAIT || state==Q_WAIT;
+
+    wire tile_valid;
+    wire [75:0] tile_sums;
+    wire signed [18:0] selected_sum = tile_sums[output_slot*19+:19];
+    wire signed [32:0] bias_extended = {bias[31],bias};
+    wire signed [32:0] sum_extended = {{14{selected_sum[18]}},selected_sum};
+    wire signed [32:0] biased_sum = bias_extended + sum_extended;
+    wire raw_overflow = biased_sum[32] != biased_sum[31];
+
     assign busy = state != IDLE;
+    winograd_tile_engine tile_engine(
+        .clk(clk), .reset(reset || !busy), .load_filter(state==FILTER_TRANSFORM),
+        .start_tile(state==TILE_START), .filter_values(filter_values), .input_tile(input_tile),
+        .result_valid(tile_valid), .tile_sums(tile_sums)
+    );
 
     function [31:0] requantize;
         input signed [31:0] value;
@@ -76,81 +83,157 @@ module npu(
     endfunction
 
     always @* begin
-        req_valid = 0; req_write = 0; req_addr = 0; req_wdata = 0;
+        req_valid = 0;
+        req_write = 0;
+        req_addr = 0;
+        req_wdata = 0;
         case (state)
-            BIAS_REQ: begin req_valid=1; req_addr=`EE470_BIAS_WORD+filter_index; end
-            X_REQ: begin
-                req_valid=1;
-                req_addr=`EE470_XQ_WORD+x_index/X_LANES;
+            BIAS_REQ: begin
+                req_valid = 1;
+                req_addr = BIAS_BASE + {9'b0,filter_index};
             end
-            W_REQ: begin req_valid=1; req_addr=`EE470_WQ_WORD+filter_index*9+kernel_index/W_LANES; end
-            RAW_REQ: begin req_valid=1; req_write=1; req_addr=384+output_index; req_wdata=raw_result; end
-            Q_REQ: begin req_valid=1; req_write=1; req_addr=1168+output_index;
-                req_wdata=requantize(raw_result,saved_config); end
+            FILTER_REQ: begin
+                req_valid = 1;
+                req_addr = filter_word;
+            end
+            TILE_REQ: begin
+                req_valid = 1;
+                req_addr = X_BASE + {3'b0,input_row,input_col};
+            end
+            RAW_REQ: begin
+                req_valid = 1;
+                req_write = 1;
+                req_addr = RAW_BASE + output_index;
+                req_wdata = raw_result;
+            end
+            Q_REQ: begin
+                req_valid = 1;
+                req_write = 1;
+                req_addr = Q_BASE + output_index;
+                req_wdata = requantize(raw_result,saved_config);
+            end
             default: begin end
         endcase
     end
+
     // synopsys sync_set_reset "reset"
     always @(posedge clk) begin
         if (reset) begin
-            state<=IDLE; done<=0; error<=0; elapsed<=0; access_wait<=0;
-            filter_index<=0; output_row<=0; output_col<=0; raw_result<=0;
-            output_index<=0; kernel_index<=0; accumulator<=0; x_value<=0; saved_config<=0;
-            multiplier_bits<=0; multiplicand<=0; partial_product<=0; bit_index<=0; product_negative<=0;
-        end else begin
-            if (clear && !busy) begin done<=0; error<=0; end
-            if (start && !busy) begin
-                state<=BIAS_REQ; done<=0; error<=0; elapsed<=0; access_wait<=0;
-                filter_index<=0; output_row<=0; output_col<=0;
-                output_index<=0; kernel_index<=0; saved_config<=config_value;
-            end else if (busy) begin
-                elapsed<=elapsed+1'b1;
-                if (state==MUL || rsp_valid || (req_valid && req_ready)) access_wait<=0;
-                else access_wait<=access_wait+1'b1;
-                if (elapsed>=`EE470_NPU_TIMEOUT-1 || access_wait==31 || (rsp_valid && rsp_error)) begin
-                    state<=IDLE; error<=1; done<=0;
-                end else case(state)
-                    BIAS_REQ: if(req_ready) state<=BIAS_WAIT;
-                    BIAS_WAIT: if(rsp_valid) begin
-                        accumulator<={rsp_rdata[31],rsp_rdata}; kernel_index<=0; state<=X_REQ;
-                    end
-                    X_REQ: if(req_ready) state<=X_WAIT;
-                    X_WAIT: if(rsp_valid) begin x_value<=x_byte; state<=W_REQ; end
-                    W_REQ: if(req_ready) state<=W_WAIT;
-                    W_WAIT: if(rsp_valid) begin
-                        multiplier_bits<=w_magnitude;
-                        multiplicand<={8'b0,x_magnitude}; partial_product<=0;
-                        product_negative<=x_value[7]^w_byte[7]; bit_index<=0; state<=MUL;
-                    end
-                    MUL: begin
-                        partial_product<=next_product;
-                        multiplier_bits<=multiplier_bits>>1;
-                        multiplicand<=multiplicand<<1;
-                        if(bit_index==7) begin
-                            accumulator<=next_accumulator;
-                            if(kernel_index!=8) begin kernel_index<=kernel_index+1'b1; state<=X_REQ; end
-                            else begin
-                                raw_result<=narrowed_result; state<=RAW_REQ;
-                            end
-                        end else bit_index<=bit_index+1'b1;
-                    end
-                    RAW_REQ: if(req_ready) state<=RAW_WAIT;
-                    RAW_WAIT: if(rsp_valid) state<=Q_REQ;
-                    Q_REQ: if(req_ready) state<=Q_WAIT;
-                    Q_WAIT: if(rsp_valid) begin
-                        if(output_index==783) begin state<=IDLE; done<=1; end
-                        else begin
-                            output_index<=output_index+1'b1; state<=BIAS_REQ;
-                            if(output_col==13) begin
-                                output_col<=0;
-                                if(output_row==13) begin output_row<=0; filter_index<=filter_index+1'b1; end
-                                else output_row<=output_row+1'b1;
-                            end else output_col<=output_col+1'b1;
-                        end
-                    end
-                    default: begin state<=IDLE; error<=1; end
-                endcase
+            state <= IDLE;
+            done <= 0;
+            error <= 0;
+            elapsed <= 0;
+            access_wait <= 0;
+            saved_config <= 0;
+            filter_index <= 0;
+            filter_output_base <= 0;
+            filter_slot <= 0;
+            input_slot <= 0;
+            output_slot <= 0;
+            tile_row <= 0;
+            tile_col <= 0;
+        end else if (!busy) begin
+            if (clear) begin
+                done <= 0;
+                error <= 0;
             end
+            if (start) begin
+                state <= BIAS_REQ;
+                done <= 0;
+                error <= 0;
+                elapsed <= 0;
+                access_wait <= 0;
+                saved_config <= config_value;
+                filter_index <= 0;
+                filter_output_base <= 0;
+                filter_slot <= 0;
+                tile_row <= 0;
+                tile_col <= 0;
+            end
+        end else begin
+            elapsed <= elapsed + 1'b1;
+            if ((req_valid && !req_ready) || (awaiting_response && !rsp_valid))
+                access_wait <= access_wait + 1'b1;
+            else access_wait <= 0;
+
+            if (elapsed==LAST_CYCLE || access_wait==5'd31 || (rsp_valid && rsp_error)) begin
+                state <= IDLE;
+                done <= 0;
+                error <= 1;
+            end else case (state)
+                BIAS_REQ: if (req_ready) state <= BIAS_WAIT;
+                BIAS_WAIT: if (rsp_valid) begin
+                    bias <= rsp_rdata;
+                    filter_slot <= 0;
+                    state <= FILTER_REQ;
+                end
+                FILTER_REQ: if (req_ready) state <= FILTER_WAIT;
+                FILTER_WAIT: if (rsp_valid) begin
+                    filter_values[filter_slot*8+:8] <= rsp_rdata[7:0];
+                    if (filter_slot==4'd8) state <= FILTER_TRANSFORM;
+                    else begin
+                        filter_slot <= filter_slot + 1'b1;
+                        state <= FILTER_REQ;
+                    end
+                end
+                FILTER_TRANSFORM: begin
+                    input_slot <= 0;
+                    state <= TILE_REQ;
+                end
+                TILE_REQ: if (req_ready) state <= TILE_WAIT;
+                TILE_WAIT: if (rsp_valid) begin
+                    input_tile[input_slot*8+:8] <= rsp_rdata[7:0];
+                    if (input_slot==4'd15) state <= TILE_START;
+                    else begin
+                        input_slot <= input_slot + 1'b1;
+                        state <= TILE_REQ;
+                    end
+                end
+                TILE_START: state <= TILE_CALC;
+                TILE_CALC: if (tile_valid) begin
+                    output_slot <= 0;
+                    state <= OUTPUT_PREP;
+                end
+                OUTPUT_PREP: begin
+                    if (saved_config[1] && raw_overflow)
+                        raw_result <= biased_sum[32] ? 32'h80000000 : 32'h7fffffff;
+                    else raw_result <= biased_sum[31:0];
+                    state <= RAW_REQ;
+                end
+                RAW_REQ: if (req_ready) state <= RAW_WAIT;
+                RAW_WAIT: if (rsp_valid) state <= Q_REQ;
+                Q_REQ: if (req_ready) state <= Q_WAIT;
+                Q_WAIT: if (rsp_valid) begin
+                    if (output_slot!=2'd3) begin
+                        output_slot <= output_slot + 1'b1;
+                        state <= OUTPUT_PREP;
+                    end else if (tile_row==3'd6 && tile_col==3'd6) begin
+                        if (filter_index==2'd3) begin
+                            state <= IDLE;
+                            done <= 1;
+                        end else begin
+                            filter_index <= filter_index + 1'b1;
+                            filter_output_base <= filter_output_base + 10'd196;
+                            tile_row <= 0;
+                            tile_col <= 0;
+                            state <= BIAS_REQ;
+                        end
+                    end else begin
+                        if (tile_col==3'd6) begin
+                            tile_col <= 0;
+                            tile_row <= tile_row + 1'b1;
+                        end else tile_col <= tile_col + 1'b1;
+                        input_slot <= 0;
+                        state <= TILE_REQ;
+                    end
+                end
+                default: begin
+                    state <= IDLE;
+                    done <= 0;
+                    error <= 1;
+                end
+            endcase
         end
     end
 endmodule
+
