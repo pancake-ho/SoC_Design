@@ -1,0 +1,35 @@
+{
+  "schema": "ee470.site.v1",
+  "sram_model": "/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/sram/verilog/saed32sram.v",
+  "macro": "SRAM1RW512x32",
+  "macro_words": 512,
+  "macro_bits": 16384,
+  "baseline_macro_instances": 2,
+  "imem_mapped_words": 256,
+  "dmem_mapped_words": 128,
+  "files": {
+    "/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/sram/verilog/saed32sram.v": "571d71db60a0b824c5e77207e20ba2e253f18a34843b0781c51093919aaef78f",
+    "/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/sram/lef/saed32sram.lef": "c3c19bd19b58b1ff58ecf4be12fedf60bf599a483ae0247c9743c9c3f376fa83",
+    "/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/stdcell_rvt/lef/saed32nm_rvt_1p9m.lef": "998bdb983fdc76f7a04db4a62bd9f73c1ff11f0ca13de1078a4e7f83ca49bcc7",
+    "/opt/eda/pdk/saed32nm/edk/SAED32_EDK/tech/milkyway/saed32nm_1p9m_mw.tf": "c142b46916dd749e817c6794d7792fae9ffb2a8df19d707c66a596ceb6180741",
+    "/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/sram/db_nldm/saed32sram_ss0p95v125c.db": "8b601751f0c542dcae70c75c2731e98e3b0563105f4de4054e402288e2eb89f1",
+    "/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/sram/db_nldm/saed32sram_ss0p95v125c.lib": "526a32c26b51df4043e0e6813b35405376ec80e32e00aa2ecd747c7f858d583d",
+    "/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/stdcell_rvt/db_nldm/saed32rvt_ss0p95v125c.db": "8763d20d96cf62bbc89c58cbb0e3eb03f931c5d4b9af3784fbd535e93988e4e8",
+    "/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/stdcell_rvt/db_nldm/saed32rvt_ss0p95v125c.lib": "1dbe59ec9991f094e59b24b34c9cffc7a95bb2eaf5774b05c2b45fe4f8302f9c",
+    "/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/sram/db_nldm/saed32sram_tt1p05v25c.db": "205ca3d2d256932acab336ccc0859a3047972294f284ca145cc35512ce05f8c2",
+    "/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/sram/db_nldm/saed32sram_tt1p05v25c.lib": "205ca3d2d256932acab336ccc0859a3047972294f284ca145cc35512ce05f8c2",
+    "/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/stdcell_rvt/db_nldm/saed32rvt_tt1p05v25c.db": "0b67efcfcdcfbb67f0a5b0928a3befc6363c55a2e272324a8875cc99cab099a4",
+    "/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/stdcell_rvt/db_nldm/saed32rvt_tt1p05v25c.lib": "a98f93d22064a540ec6149dd47184909c88118fac01e9d9533d3f99e5a8f1500",
+    "/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/sram/db_nldm/saed32sram_ff1p16vn40c.db": "b17d7b3d9eaeec4c5d02082080af0d1c6b9d1f0ff702c6e59d1adef91e466c7d",
+    "/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/sram/db_nldm/saed32sram_ff1p16vn40c.lib": "c8075e08a9a2d2027ca053ba24cc1ff24b1e631a03d7e2932ec1d5c3cb227ade",
+    "/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/stdcell_rvt/db_nldm/saed32rvt_ff1p16vn40c.db": "5689c0f33be240b3c4a8d92e19bacbb753bd4b45d7d5e59adf510ed65da5418a",
+    "/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/stdcell_rvt/db_nldm/saed32rvt_ff1p16vn40c.lib": "7f4d17a329a2f31c3fce664e73917a1c016f63c224d2de9137c29d31726be829"
+  },
+  "corners": [
+    "ss0p95v125c",
+    "tt1p05v25c",
+    "ff1p16vn40c"
+  ],
+  "physical_flow": "DC NXT Topographical with NDM references",
+  "os": "Linux-4.18.0-553.134.1.el8_10.x86_64-x86_64-with-centos-8.10-Green_Obsidian"
+}

@@ -1,0 +1,28 @@
+source /home/qwe1234k/OpenROAD-flow-scripts/flow/platforms/asap7/liberty_suppressions.tcl
+read_liberty /home/qwe1234k/OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_AO_RVT_FF_nldm_211120.lib.gz
+read_liberty /home/qwe1234k/OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_INVBUF_RVT_FF_nldm_220122.lib.gz
+read_liberty /home/qwe1234k/OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_OA_RVT_FF_nldm_211120.lib.gz
+read_liberty /home/qwe1234k/OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_SIMPLE_RVT_FF_nldm_211120.lib.gz
+read_liberty /home/qwe1234k/OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_SEQ_RVT_FF_nldm_220123.lib
+read_db ./results/asap7/chip_v28a/base/1_synth.odb
+read_sdc ./results/asap7/chip_v28a/base/1_synth.sdc
+source /home/qwe1234k/OpenROAD-flow-scripts/flow/platforms/asap7/setRC.tcl
+================ DESIGN AREA ================
+Design area 9913 um^2 100% utilization.
+================ TIMING ================
+worst slack max 4.96103144
+wns max 0.00000000
+tns max 0.00000000
+================ POWER ================
+Group                  Internal  Switching    Leakage      Total
+                          Power      Power      Power      Power (Watts)
+----------------------------------------------------------------
+Sequential             1.54e-02   3.42e-04   1.12e-06   1.58e-02  64.6%
+Combinational          4.34e-03   4.31e-03   6.02e-06   8.65e-03  35.4%
+Clock                  0.00e+00   0.00e+00   0.00e+00   0.00e+00   0.0%
+Macro                  0.00e+00   0.00e+00   0.00e+00   0.00e+00   0.0%
+Pad                    0.00e+00   0.00e+00   0.00e+00   0.00e+00   0.0%
+----------------------------------------------------------------
+Total                  1.98e-02   4.65e-03   7.14e-06   2.44e-02 100.0%
+                          80.9%      19.0%       0.0%
+Elapsed time: 0:16.95[h:]min:sec. CPU time: user 19.21 sys 0.90 (118%). Peak memory: 472692KB.

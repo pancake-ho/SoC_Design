@@ -1,0 +1,52 @@
+{
+  "schema": "ee470.topo-flow.v1",
+  "tool": "dcnxt_topo_queue",
+  "mode": "DC NXT Topographical",
+  "physical_model": "NDM",
+  "scenarios": [
+    "SS0P95V125C_CMAX",
+    "SS0P95V125C_CMIN",
+    "TT1P05V25C_CMAX",
+    "TT1P05V25C_CMIN",
+    "FF1P16VN40C_CMAX",
+    "FF1P16VN40C_CMIN"
+  ],
+  "clock_ns": 10,
+  "baseline_macro": "SRAM1RW512x32",
+  "minimum_real_sram_instances": 2,
+  "ndm_status": "EXTERNAL_FULL_PVT",
+  "runtime_status": "SYNTHESIS_AND_GATE_F12_FUNCTION_VERIFIED_SIX_SCENARIOS",
+  "ppa_eligible": false,
+  "reason": "Gate F12, SDF annotation and model checks pass in six scenarios; original baseline STA hold violations remain.",
+  "clock_latency_ps": 0,
+  "clock_model": "ideal",
+  "gate_scope": "tb_project.adapter.dut",
+  "sdf_per_scenario": true,
+  "hold_fix_request": "set_fix_hold CORE_CLK",
+  "release": "v9.2",
+  "sdf_annotation_status": "VERIFIED_SIX_SCENARIOS_20261117",
+  "workload": {
+    "input": [
+      16,
+      16,
+      1
+    ],
+    "filters": [
+      4,
+      3,
+      3
+    ],
+    "output": [
+      4,
+      14,
+      14
+    ],
+    "macs": 7056
+  },
+  "baseline_real_sram_instances": 5,
+  "rtl_suite": "F01_F12_VCS_PASS",
+  "synthesis_elapsed_seconds": 267.01,
+  "gate_qualified": false,
+  "gate_f12_functional_pass": true,
+  "gate_model_warnings_resolved": true
+}

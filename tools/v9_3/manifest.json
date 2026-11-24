@@ -1,0 +1,38 @@
+{
+  "tb/common/tb_project.v": {
+    "old": "91884908013aafe1fd21d7ddb9385727fd9c811da55da89aa65bb29e23a6e432",
+    "new": "20c606a304c128d93ef1a71626239c9e0345f5d9ae81df543f933164544c1925"
+  },
+  "synth/gate_timing.py": {
+    "old": "1cb24aef397af8d3dbdc28b5599f28953be2b3630e62162fb009afcec7c3ab19",
+    "new": "a1f930c871ab18dce20331957a5a5cfc352280511e7be4116eda8cac5078ab84"
+  },
+  "synth/power_saif.py": {
+    "old": null,
+    "new": "800afe64a171cd96cca0670dd85fce4ff7785d5514881513b174aede6e7ca81b"
+  },
+  "synth/README_KO.md": {
+    "old": "901df9d08ca08b55b3482a69d6cc3eafd1b9519e8c67a327281601bd6daf4938",
+    "new": "933b24568b897e17f10882425cfed192ff1ea016f54939ff129f597adb2ef0a8"
+  },
+  "docs/POWER_SAIF_KO.md": {
+    "old": null,
+    "new": "6ce0e0509f6601bce7272fec46219be2174ad9db4d9a65b443af3700c89982e6"
+  },
+  "docs/POWER_VERIFICATION_KO.md": {
+    "old": null,
+    "new": "c49873435f93bbffc3297ef77b2a395eff39979f69a9213a84e987d0fc2cf538"
+  },
+  "docs/RELEASE_NOTES_v9_3_KO.md": {
+    "old": null,
+    "new": "8ee3137e26914edcd3a05748ff52e16d4ccb48999b938669a064624c6dea5f6d"
+  },
+  "docs/RUBRIC.md": {
+    "old": "4d6ffba74e753977d117b477c1307df4e539bd487b054c6fca27f514ab85b172",
+    "new": "4663228d501121ef4093278a90a0ba7133ec0b1349c178e3481e29fa4ce8aa00"
+  },
+  "README_KO.md": {
+    "old": "f562c1ad37428460650f71893a16a6c71fe0ced535fe6c7383ad226126d82851",
+    "new": "4e67fdfab56a3afd9dbe0dc93a672cdb6a85b6113581bad933536247b2a3d1dd"
+  }
+}

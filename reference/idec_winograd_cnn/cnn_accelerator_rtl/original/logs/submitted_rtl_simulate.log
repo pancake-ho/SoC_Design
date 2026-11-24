@@ -1,0 +1,23 @@
+Time resolution is 1 ps
+DATA_DIR=../../../../../../data
+ORACLE_DIR=../../../../../../reference
+NUM_IMAGES=       1000
+image=0 decision=0 inclusive_cycles=836
+image=99 decision=9 inclusive_cycles=836
+image=199 decision=9 inclusive_cycles=836
+image=299 decision=9 inclusive_cycles=836
+image=399 decision=9 inclusive_cycles=836
+image=499 decision=9 inclusive_cycles=836
+image=599 decision=9 inclusive_cycles=836
+image=699 decision=9 inclusive_cycles=836
+image=799 decision=9 inclusive_cycles=836
+image=899 decision=9 inclusive_cycles=836
+image=999 decision=9 inclusive_cycles=836
+V28A RUN COMPLETE: images=1000 inclusive_cycles_min=836 max=836 avg=836.000
+ELAPSED CYCLES: min=835 max=835 avg=835.000
+Cycle convention: pixel[0] capture=1; elapsed edge intervals=inclusive_cycles-1.
+ACCURACY: 990/1000 (99.00%), labels=index modulo 10
+V28A CHECKPOINT PASS: 990/1000 (99.00%)
+PYTHON ORACLE PASS: predictions=1000 FC scores=10000
+$finish called at time : 8530 us : File "C:/Users/USER/Desktop/CCDC_submission/xpr/test_28a_rtl.xpr/test_28a/test_28a.srcs/sim_1/imports/test28a/top_tb_v28a_1000.sv" Line 301
+INFO: xsimkernel Simulation Memory Usage: 31328 KB (Peak: 31328 KB), Simulation CPU Usage: 40640 ms

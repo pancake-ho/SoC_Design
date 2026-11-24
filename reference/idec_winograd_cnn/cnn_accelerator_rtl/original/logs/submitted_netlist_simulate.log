@@ -1,0 +1,6 @@
+Time resolution is 1 ps
+DATA_DIR=../../../../../../data
+ORACLE_DIR=../../../../../../reference
+NUM_IMAGES=       1000
+image=0 decision=0 inclusive_cycles=836
+INFO: xsimkernel Simulation Memory Usage: 234264 KB (Peak: 234264 KB), Simulation CPU Usage: 100093 ms

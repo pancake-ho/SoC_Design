@@ -1,0 +1,35 @@
+{
+  "frames": 2,
+  "words": 3731,
+  "frame_words": 1865,
+  "shape": [
+    16,
+    16,
+    1,
+    3,
+    3,
+    4
+  ],
+  "macs_per_frame": 7056,
+  "isa_words": 41,
+  "isa_trace": 43,
+  "integration_words": 39,
+  "cpu_start_pc": 20,
+  "seed": 470,
+  "vector_sha256": "82c5ea7c645e7ae88bee99221d816a5bb4f661a8e228211c3d6f3a411afc31a6",
+  "overflow_expected_frames": 0,
+  "overflow_frame_indices": {
+    "positive": [],
+    "negative": []
+  },
+  "overflow_by_mode": {
+    "satfinite": {
+      "positive": 0,
+      "negative": 0
+    },
+    "wrap": {
+      "positive": 0,
+      "negative": 0
+    }
+  }
+}

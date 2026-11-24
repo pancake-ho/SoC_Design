@@ -1,0 +1,11 @@
+{
+  "schema": "ee470.profile.v2",
+  "mmio_base": 1024,
+  "constant_base": 1536,
+  "clock_ns": 10,
+  "cpu_transfer_timeout": 16,
+  "npu_timeout": 262144,
+  "seed": 470,
+  "xq_layout": "word32",
+  "wq_layout": "word32"
+}

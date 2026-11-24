@@ -1,0 +1,14 @@
++incdir+rtl/engine
+rtl/core/cnn_core_pkg.sv
+rtl/core/conv1_input_window.sv
+rtl/core/conv1_quantize_pool.sv
+rtl/core/conv2_accumulate_pool.sv
+rtl/core/fc_score_argmax.sv
+rtl/core/engine_request_scheduler.sv
+rtl/engine/input_tile_transform.sv
+rtl/engine/shift_add_lane.sv
+rtl/engine/shift_add_lane_array.sv
+rtl/engine/output_transform_reduce.sv
+rtl/engine/shared_shift_add_engine.sv
+rtl/cnn_inference_core.sv
+rtl/cnn_accelerator_top.v

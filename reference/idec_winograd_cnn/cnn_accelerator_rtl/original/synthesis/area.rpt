@@ -1,0 +1,71 @@
+Found gzip magic in file `/home/qwe1234k/OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_AO_RVT_FF_nldm_211120.lib.gz', decompressing using zlib.
+Found gzip magic in file `/home/qwe1234k/OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_INVBUF_RVT_FF_nldm_220122.lib.gz', decompressing using zlib.
+Found gzip magic in file `/home/qwe1234k/OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_OA_RVT_FF_nldm_211120.lib.gz', decompressing using zlib.
+Found gzip magic in file `/home/qwe1234k/OpenROAD-flow-scripts/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_SIMPLE_RVT_FF_nldm_211120.lib.gz', decompressing using zlib.
+
+21. Printing statistics.
+
+=== chip_v28a_top ===
+
+        +----------------------------Count including submodules.
+        |        +-------------------Area including submodules.
+        |        |        +----------Local count, excluding submodules.
+        |        |        |        +-Local area, excluding submodules.
+        |        |        |        | 
+    93445        -    93445        - wires
+    99807        -    99807        - wire bits
+     3915        -     3915        - public wires
+    10277        -    10277        - public wire bits
+       21        -       21        - ports
+     6383        -     6383        - port bits
+        -        -        -        - memories
+        -        -        -        - memory bits
+        -        -        -        - processes
+    89619 9.91E+03    89619 9.91E+03 cells
+     2884  252.292     2884  252.292   AND2x2_ASAP7_75t_R
+     1775  155.277     1775  155.277   AND3x1_ASAP7_75t_R
+      131    13.37      131    13.37   AND4x1_ASAP7_75t_R
+       48    5.599       48    5.599   AND5x1_ASAP7_75t_R
+    12256 1.07E+03    12256 1.07E+03   AO21x1_ASAP7_75t_R
+     1925  280.665     1925  280.665   AO221x1_ASAP7_75t_R
+      371   48.683      371   48.683   AO22x1_ASAP7_75t_R
+        3      0.7        3      0.7   AO31x2_ASAP7_75t_R
+     1832  213.684     1832  213.684   AO32x1_ASAP7_75t_R
+     1139  199.279     1139  199.279   AOI211x1_ASAP7_75t_R
+     6922  807.382     6922  807.382   AOI21x1_ASAP7_75t_R
+       49   10.002       49   10.002   AOI221x1_ASAP7_75t_R
+       89   12.976       89   12.976   AOI22x1_ASAP7_75t_R
+     5854  426.757     5854  426.757   BUFx2_ASAP7_75t_R
+      184   16.096      184   16.096   BUFx3_ASAP7_75t_R
+      109   11.125      109   11.125   BUFx4_ASAP7_75t_R
+       90   10.498       90   10.498   BUFx4f_ASAP7_75t_R
+       99   11.547       99   11.547   BUFx5_ASAP7_75t_R
+       82   11.956       82   11.956   BUFx6f_ASAP7_75t_R
+     7221 2.11E+03     7221 2.11E+03   DFFHQNx1_ASAP7_75t_R
+     1010  206.161     1010  206.161   FAx1_ASAP7_75t_R
+     2800  367.416     2800  367.416   HAxp5_ASAP7_75t_R
+    12141  531.047    12141  531.047   INVx1_ASAP7_75t_R
+        7    0.408        7    0.408   INVx2_ASAP7_75t_R
+     7024   614.46     7024   614.46   NAND2x1_ASAP7_75t_R
+       10    1.458       10    1.458   NAND2x2_ASAP7_75t_R
+      206   33.038      206   33.038   NAND3x1_ASAP7_75t_R
+     9439  825.724     9439  825.724   NOR2x1_ASAP7_75t_R
+        3    0.437        3    0.437   NOR2x2_ASAP7_75t_R
+       75   12.028       75   12.028   NOR3x1_ASAP7_75t_R
+      333   38.841      333   38.841   OA211x2_ASAP7_75t_R
+     3565  363.844     3565  363.844   OA21x2_ASAP7_75t_R
+      158   23.036      158   23.036   OA22x2_ASAP7_75t_R
+        3    0.656        3    0.656   OA31x2_ASAP7_75t_R
+     6236  727.367     6236  727.367   OAI21x1_ASAP7_75t_R
+      652   95.062      652   95.062   OAI22x1_ASAP7_75t_R
+      130   11.372      130   11.372   OR2x2_ASAP7_75t_R
+      216   18.896      216   18.896   OR3x1_ASAP7_75t_R
+      385   39.293      385   39.293   OR4x1_ASAP7_75t_R
+      238    27.76      238    27.76   OR5x1_ASAP7_75t_R
+        1    0.175        1    0.175   XNOR2x1_ASAP7_75t_R
+      510   81.794      510   81.794   XNOR2x2_ASAP7_75t_R
+     1414  226.777     1414  226.777   XOR2x2_ASAP7_75t_R
+
+   Chip area for module '\chip_v28a_top': 9912.737880
+     of which used for sequential elements: 2105.643600 (21.24%)
+

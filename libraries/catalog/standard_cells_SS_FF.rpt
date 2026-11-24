@@ -1,0 +1,413 @@
+****************************************
+Report : library
+Library: saed32_rvt_mc
+Version: V-2023.12-SP5
+Date   : Thu Oct 15 20:22:11 2026
+****************************************
+
+Full name: /home/jhpark/codex/soc/admin/week07_ndm_validation/library-i32cn0y3/saed32_rvt_mc.ndm:saed32_rvt_mc
+File name: /home/jhpark/codex/soc/admin/week07_ndm_validation/library-i32cn0y3/saed32_rvt_mc.ndm
+Design count: 294
+
+--------------------------------------------------------------------------------
+** Timing Data:
+
+Power rails:
+
+Index  Name        Type
+  0    <default>   power
+  1    VDD         power
+  2    VDDG        power
+  3    VSS         ground
+
+Pane count: 2
+
+Pane 0:
+  Process label: SS
+  Process number: 0.99
+  Voltage rail count: 4
+  Voltage for rail 0 (<default>): 0.95
+  Voltage for rail 1 (VDD): 0.95
+  Voltage for rail 2 (VDDG): 0.95
+  Voltage for rail 3 (VSS): 0
+  Temperature: 125
+
+  Thresholds:
+    r/f InputDelay: 0.5/0.5  r/f OutputDelay: 0.5/0.5
+    l/h RiseTrans:  0.2/0.8  h/l FallTrans:   0.8/0.2
+    TransDerate:    1
+
+  Source .db file:
+    /opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/stdcell_rvt/db_nldm/saed32rvt_ss0p95v125c.db
+  Mapped .db file:
+    (none)
+
+
+
+Pane 1:
+  Process label: FF
+  Process number: 1.01
+  Voltage rail count: 4
+  Voltage for rail 0 (<default>): 1.16
+  Voltage for rail 1 (VDD): 1.16
+  Voltage for rail 2 (VDDG): 1.16
+  Voltage for rail 3 (VSS): 0
+  Temperature: -40
+
+  Thresholds:
+    r/f InputDelay: 0.5/0.5  r/f OutputDelay: 0.5/0.5
+    l/h RiseTrans:  0.2/0.8  h/l FallTrans:   0.8/0.2
+    TransDerate:    1
+
+  Source .db file:
+    /opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/stdcell_rvt/db_nldm/saed32rvt_ff1p16vn40c.db
+  Mapped .db file:
+    (none)
+
+
+
+
+Data Model Existence : 
+  nlpm,nldm 
+
+
+Source .db libraries:
+  saed32rvt_ss0p95v125c.db:saed32rvt_ss0p95v125c
+  saed32rvt_ff1p16vn40c.db:saed32rvt_ff1p16vn40c
+
+
+Operating Conditions:
+
+   Name                 Process   Label                Temp      Voltage   Original DB Name     Original DB Filename Mapped DB Filename
+                                                                                                                              Pane#    Status
+   -------------------------------------------------------------------------------------------------------------------------------------------------------------------
+   ss0p95v125c          0.99      SS                   125.00    0.95      saed32rvt_ss0p95v125c
+                                                                                                saed32rvt_ss0p95v125c.db
+                                                                                                                     (none)   0        active
+   ff1p16vn40c          1.01      FF                   -40.00    1.16      saed32rvt_ff1p16vn40c
+                                                                                                saed32rvt_ff1p16vn40c.db
+                                                                                                                     (none)   1        active
+
+
+Cell Summary:
+
+   Cell-Type:
+      buf - buffer cell
+      inv - inverter cell
+     comb - other combinational cells (not buffer or inverter)
+      seq - sequential cell
+       as - cell with async signal pins. as(type) as
+          as(c) - clear
+          as(p) - preset
+          as(c,p) - clear and preset
+        t - test cell. t(scan_type) as
+          t(lssd) - LSSD scan
+      imc - macro cell 
+      pad - pad cell
+     bump - bump cell
+      mem - memory cell
+      adt - antenna diode type
+      fil - filler cell
+      tap - tap cell
+    decap - decap cell
+      ctl - has CTL test model
+
+   Cell                        Panes         Frame-Exist   site_name     Width         Height        Multiple      Cell-Type
+   ------------------------------------------------------------------------------------------------------------------------------
+   AND2X1_RVT                  0-1           YES           unit          1.216         1.672         1X            comb
+   AND2X2_RVT                  0-1           YES           unit          1.368         1.672         1X            comb
+   AND2X4_RVT                  0-1           YES           unit          1.672         1.672         1X            comb
+   AND3X1_RVT                  0-1           YES           unit          1.368         1.672         1X            comb
+   AND3X2_RVT                  0-1           YES           unit          1.52          1.672         1X            comb
+   AND3X4_RVT                  0-1           YES           unit          1.824         1.672         1X            comb
+   AND4X1_RVT                  0-1           YES           unit          1.52          1.672         1X            comb
+   AND4X2_RVT                  0-1           YES           unit          2.28          1.672         1X            comb
+   AND4X4_RVT                  0-1           YES           unit          2.584         1.672         1X            comb
+   ANTENNA_RVT                 0-1           YES           unit          0.456         1.672         1X            comb
+   AO21X1_RVT                  0-1           YES           unit          1.52          1.672         1X            comb
+   AO21X2_RVT                  0-1           YES           unit          1.672         1.672         1X            comb
+   AO221X1_RVT                 0-1           YES           unit          1.824         1.672         1X            comb
+   AO221X2_RVT                 0-1           YES           unit          1.976         1.672         1X            comb
+   AO222X1_RVT                 0-1           YES           unit          1.976         1.672         1X            comb
+   AO222X2_RVT                 0-1           YES           unit          2.128         1.672         1X            comb
+   AO22X1_RVT                  0-1           YES           unit          1.52          1.672         1X            comb
+   AO22X2_RVT                  0-1           YES           unit          1.672         1.672         1X            comb
+   AOBUFX1_RVT                 0-1           YES           unit          2.128         3.344         2X            buf
+   AOBUFX2_RVT                 0-1           YES           unit          1.976         3.344         2X            buf
+   AOBUFX4_RVT                 0-1           YES           unit          2.432         3.344         2X            buf
+   AODFFARX1_RVT               0-1           YES           unit          2.584         3.344         2X            seq,as(c)
+   AODFFARX2_RVT               0-1           YES           unit          2.888         3.344         2X            seq,as(c)
+   AODFFNARX1_RVT              0-1           YES           unit          2.584         3.344         2X            seq,as(c)
+   AODFFNARX2_RVT              0-1           YES           unit          2.888         3.344         2X            seq,as(c)
+   AOI21X1_RVT                 0-1           YES           unit          1.824         1.672         1X            comb
+   AOI21X2_RVT                 0-1           YES           unit          1.976         1.672         1X            comb
+   AOI221X1_RVT                0-1           YES           unit          2.128         1.672         1X            comb
+   AOI221X2_RVT                0-1           YES           unit          2.28          1.672         1X            comb
+   AOI222X1_RVT                0-1           YES           unit          2.28          1.672         1X            comb
+   AOI222X2_RVT                0-1           YES           unit          2.432         1.672         1X            comb
+   AOI22X1_RVT                 0-1           YES           unit          1.824         1.672         1X            comb
+   AOI22X2_RVT                 0-1           YES           unit          1.976         1.672         1X            comb
+   AOINVX1_RVT                 0-1           YES           unit          2.128         3.344         2X            inv
+   AOINVX2_RVT                 0-1           YES           unit          2.28          3.344         2X            inv
+   AOINVX4_RVT                 0-1           YES           unit          2.584         3.344         2X            inv
+   BSLEX1_RVT                  0-1           YES           unit          1.064         1.672         1X            comb
+   BSLEX2_RVT                  0-1           YES           unit          1.216         1.672         1X            comb
+   BSLEX4_RVT                  0-1           YES           unit          1.52          1.672         1X            comb
+   BUSKP_RVT                   0-1           YES           unit          1.824         1.672         1X            comb
+   CGLNPRX2_RVT                0-1           YES           unit          3.8           1.672         1X            seq
+   CGLNPRX8_RVT                0-1           YES           unit          4.712         1.672         1X            seq
+   CGLNPSX16_RVT               0-1           YES           unit          7.144         1.672         1X            seq
+   CGLNPSX2_RVT                0-1           YES           unit          3.8           1.672         1X            seq
+   CGLNPSX4_RVT                0-1           YES           unit          4.104         1.672         1X            seq
+   CGLNPSX8_RVT                0-1           YES           unit          4.712         1.672         1X            seq
+   CGLPPRX2_RVT                0-1           YES           unit          3.496         1.672         1X            seq
+   CGLPPRX8_RVT                0-1           YES           unit          4.408         1.672         1X            seq
+   CGLPPSX16_RVT               0-1           YES           unit          6.232         1.672         1X            seq
+   CGLPPSX2_RVT                0-1           YES           unit          4.104         1.672         1X            seq
+   CGLPPSX4_RVT                0-1           YES           unit          4.408         1.672         1X            seq
+   CGLPPSX8_RVT                0-1           YES           unit          5.016         1.672         1X            seq
+   CLOAD1_RVT                  0-1           YES           unit          0.76          1.672         1X            comb
+   DCAP_RVT                    0-1           YES           unit          0.76          1.672         1X            decap
+   DEC24X1_RVT                 0-1           YES           unit          3.648         1.672         1X            comb
+   DEC24X2_RVT                 0-1           YES           unit          4.256         1.672         1X            comb
+   DELLN1X2_RVT                0-1           YES           unit          3.04          1.672         1X            buf
+   DELLN2X2_RVT                0-1           YES           unit          3.952         1.672         1X            buf
+   DELLN3X2_RVT                0-1           YES           unit          5.776         1.672         1X            buf
+   DFFARX1_RVT                 0-1           YES           unit          4.256         1.672         1X            seq,as(c)
+   DFFARX2_RVT                 0-1           YES           unit          4.56          1.672         1X            seq,as(c)
+   DFFASRX1_RVT                0-1           YES           unit          4.56          1.672         1X            seq,as(c,p)
+   DFFASRX2_RVT                0-1           YES           unit          4.864         1.672         1X            seq,as(c,p)
+   DFFASX1_RVT                 0-1           YES           unit          4.256         1.672         1X            seq,as(p)
+   DFFASX2_RVT                 0-1           YES           unit          4.56          1.672         1X            seq,as(p)
+   DFFNARX1_RVT                0-1           YES           unit          4.256         1.672         1X            seq,as(c)
+   DFFNARX2_RVT                0-1           YES           unit          4.56          1.672         1X            seq,as(c)
+   DFFNASRNX1_RVT              0-1           YES           unit          4.408         1.672         1X            seq,as(c,p)
+   DFFNASRNX2_RVT              0-1           YES           unit          4.56          1.672         1X            seq,as(c,p)
+   DFFNASRQX1_RVT              0-1           YES           unit          4.408         1.672         1X            seq,as(c,p)
+   DFFNASRQX2_RVT              0-1           YES           unit          4.56          1.672         1X            seq,as(c,p)
+   DFFNASRX1_RVT               0-1           YES           unit          4.56          1.672         1X            seq,as(c,p)
+   DFFNASRX2_RVT               0-1           YES           unit          4.864         1.672         1X            seq,as(c,p)
+   DFFNASX1_RVT                0-1           YES           unit          4.256         1.672         1X            seq,as(p)
+   DFFNASX2_RVT                0-1           YES           unit          4.56          1.672         1X            seq,as(p)
+   DFFNX1_RVT                  0-1           YES           unit          3.952         1.672         1X            seq
+   DFFNX2_RVT                  0-1           YES           unit          4.256         1.672         1X            seq
+   DFFSSRX1_RVT                0-1           YES           unit          4.256         1.672         1X            seq
+   DFFSSRX2_RVT                0-1           YES           unit          4.56          1.672         1X            seq
+   DFFX1_RVT                   0-1           YES           unit          3.952         1.672         1X            seq
+   DFFX2_RVT                   0-1           YES           unit          4.256         1.672         1X            seq
+   DHFILLH2_RVT                0-1           YES           unit          0.304         3.344         2X            fil
+   DHFILLHL2_RVT               0-1           YES           unit          0.304         3.344         2X            fil
+   DHFILLHLHLS11_RVT           0-1           YES           unit          1.672         3.344         2X            fil
+   FADDX1_RVT                  0-1           YES           unit          2.888         1.672         1X            comb
+   FADDX2_RVT                  0-1           YES           unit          3.192         1.672         1X            comb
+   HADDX1_RVT                  0-1           YES           unit          1.976         1.672         1X            comb
+   HADDX2_RVT                  0-1           YES           unit          2.28          1.672         1X            comb
+   IBUFFX16_RVT                0-1           YES           unit          3.952         1.672         1X            inv
+   IBUFFX2_RVT                 0-1           YES           unit          1.52          1.672         1X            inv
+   IBUFFX32_RVT                0-1           YES           unit          6.992         1.672         1X            inv
+   IBUFFX4_RVT                 0-1           YES           unit          1.824         1.672         1X            inv
+   IBUFFX8_RVT                 0-1           YES           unit          2.584         1.672         1X            inv
+   INVX0_RVT                   0-1           YES           unit          0.76          1.672         1X            inv
+   INVX16_RVT                  0-1           YES           unit          3.04          1.672         1X            inv
+   INVX1_RVT                   0-1           YES           unit          0.76          1.672         1X            inv
+   INVX2_RVT                   0-1           YES           unit          0.912         1.672         1X            inv
+   INVX32_RVT                  0-1           YES           unit          5.472         1.672         1X            inv
+   INVX4_RVT                   0-1           YES           unit          1.216         1.672         1X            inv
+   INVX8_RVT                   0-1           YES           unit          1.824         1.672         1X            inv
+   ISOLANDAOX1_RVT             0-1           YES           unit          3.344         1.672         1X            comb
+   ISOLANDAOX2_RVT             0-1           YES           unit          3.496         1.672         1X            comb
+   ISOLANDAOX4_RVT             0-1           YES           unit          4.104         1.672         1X            comb
+   ISOLANDAOX8_RVT             0-1           YES           unit          5.32          1.672         1X            comb
+   ISOLANDX1_RVT               0-1           YES           unit          1.52          1.672         1X            comb
+   ISOLANDX2_RVT               0-1           YES           unit          1.672         1.672         1X            comb
+   ISOLANDX4_RVT               0-1           YES           unit          1.976         1.672         1X            comb
+   ISOLANDX8_RVT               0-1           YES           unit          2.584         1.672         1X            comb
+   ISOLORAOX1_RVT              0-1           YES           unit          3.496         1.672         1X            comb
+   ISOLORAOX2_RVT              0-1           YES           unit          3.8           1.672         1X            comb
+   ISOLORAOX4_RVT              0-1           YES           unit          4.408         1.672         1X            comb
+   ISOLORAOX8_RVT              0-1           YES           unit          5.928         1.672         1X            comb
+   ISOLORX1_RVT                0-1           YES           unit          1.216         1.672         1X            comb
+   ISOLORX2_RVT                0-1           YES           unit          1.368         1.672         1X            comb
+   ISOLORX4_RVT                0-1           YES           unit          1.672         1.672         1X            comb
+   ISOLORX8_RVT                0-1           YES           unit          2.584         1.672         1X            comb
+   LARX1_RVT                   0-1           YES           unit          3.344         1.672         1X            seq,as(c)
+   LARX2_RVT                   0-1           YES           unit          3.648         1.672         1X            seq,as(c)
+   LASRNX1_RVT                 0-1           YES           unit          3.344         1.672         1X            seq,as(c,p)
+   LASRNX2_RVT                 0-1           YES           unit          3.496         1.672         1X            seq,as(c,p)
+   LASRQX1_RVT                 0-1           YES           unit          3.344         1.672         1X            seq,as(c,p)
+   LASRQX2_RVT                 0-1           YES           unit          3.496         1.672         1X            seq,as(c,p)
+   LASRX1_RVT                  0-1           YES           unit          3.496         1.672         1X            seq,as(c,p)
+   LASRX2_RVT                  0-1           YES           unit          3.8           1.672         1X            seq,as(c,p)
+   LASX1_RVT                   0-1           YES           unit          3.192         1.672         1X            seq,as(p)
+   LASX2_RVT                   0-1           YES           unit          3.496         1.672         1X            seq,as(p)
+   LATCHX1_RVT                 0-1           YES           unit          3.04          1.672         1X            seq
+   LATCHX2_RVT                 0-1           YES           unit          3.344         1.672         1X            seq
+   LNANDX1_RVT                 0-1           YES           unit          1.368         1.672         1X            seq,as(c,p)
+   LNANDX2_RVT                 0-1           YES           unit          1.976         1.672         1X            seq,as(c,p)
+   MUX21X1_RVT                 0-1           YES           unit          1.976         1.672         1X            comb
+   MUX21X2_RVT                 0-1           YES           unit          2.128         1.672         1X            comb
+   MUX41X1_RVT                 0-1           YES           unit          3.344         1.672         1X            comb
+   MUX41X2_RVT                 0-1           YES           unit          3.648         1.672         1X            comb
+   NAND2X0_RVT                 0-1           YES           unit          0.912         1.672         1X            comb
+   NAND2X1_RVT                 0-1           YES           unit          1.52          1.672         1X            comb
+   NAND2X2_RVT                 0-1           YES           unit          1.672         1.672         1X            comb
+   NAND2X4_RVT                 0-1           YES           unit          1.976         1.672         1X            comb
+   NAND3X0_RVT                 0-1           YES           unit          1.064         1.672         1X            comb
+   NAND3X1_RVT                 0-1           YES           unit          1.672         1.672         1X            comb
+   NAND3X2_RVT                 0-1           YES           unit          1.824         1.672         1X            comb
+   NAND3X4_RVT                 0-1           YES           unit          2.128         1.672         1X            comb
+   NAND4X0_RVT                 0-1           YES           unit          1.216         1.672         1X            comb
+   NAND4X1_RVT                 0-1           YES           unit          1.824         1.672         1X            comb
+   NBUFFX16_RVT                0-1           YES           unit          3.648         1.672         1X            buf
+   NBUFFX2_RVT                 0-1           YES           unit          1.216         1.672         1X            buf
+   NBUFFX32_RVT                0-1           YES           unit          6.384         1.672         1X            buf
+   NBUFFX4_RVT                 0-1           YES           unit          1.52          1.672         1X            buf
+   NBUFFX8_RVT                 0-1           YES           unit          2.28          1.672         1X            buf
+   NMT1_RVT                    0-1           YES           unit          0.76          1.672         1X            comb
+   NMT2_RVT                    0-1           YES           unit          0.912         1.672         1X            comb
+   NMT3_RVT                    0-1           YES           unit          1.216         1.672         1X            comb
+   NOR2X0_RVT                  0-1           YES           unit          1.52          1.672         1X            comb
+   NOR2X1_RVT                  0-1           YES           unit          1.52          1.672         1X            comb
+   NOR2X2_RVT                  0-1           YES           unit          1.672         1.672         1X            comb
+   NOR2X4_RVT                  0-1           YES           unit          1.976         1.672         1X            comb
+   NOR3X0_RVT                  0-1           YES           unit          1.672         1.672         1X            comb
+   NOR3X1_RVT                  0-1           YES           unit          1.672         1.672         1X            comb
+   NOR3X2_RVT                  0-1           YES           unit          1.824         1.672         1X            comb
+   NOR3X4_RVT                  0-1           YES           unit          2.128         1.672         1X            comb
+   NOR4X0_RVT                  0-1           YES           unit          1.824         1.672         1X            comb
+   NOR4X1_RVT                  0-1           YES           unit          1.824         1.672         1X            comb
+   OA21X1_RVT                  0-1           YES           unit          1.52          1.672         1X            comb
+   OA21X2_RVT                  0-1           YES           unit          1.672         1.672         1X            comb
+   OA221X1_RVT                 0-1           YES           unit          1.824         1.672         1X            comb
+   OA221X2_RVT                 0-1           YES           unit          1.976         1.672         1X            comb
+   OA222X1_RVT                 0-1           YES           unit          1.976         1.672         1X            comb
+   OA222X2_RVT                 0-1           YES           unit          2.128         1.672         1X            comb
+   OA22X1_RVT                  0-1           YES           unit          1.52          1.672         1X            comb
+   OA22X2_RVT                  0-1           YES           unit          1.672         1.672         1X            comb
+   OAI21X1_RVT                 0-1           YES           unit          1.824         1.672         1X            comb
+   OAI21X2_RVT                 0-1           YES           unit          1.976         1.672         1X            comb
+   OAI221X1_RVT                0-1           YES           unit          2.128         1.672         1X            comb
+   OAI221X2_RVT                0-1           YES           unit          2.28          1.672         1X            comb
+   OAI222X1_RVT                0-1           YES           unit          2.28          1.672         1X            comb
+   OAI222X2_RVT                0-1           YES           unit          2.432         1.672         1X            comb
+   OAI22X1_RVT                 0-1           YES           unit          1.824         1.672         1X            comb
+   OAI22X2_RVT                 0-1           YES           unit          1.976         1.672         1X            comb
+   OR2X1_RVT                   0-1           YES           unit          1.216         1.672         1X            comb
+   OR2X2_RVT                   0-1           YES           unit          1.368         1.672         1X            comb
+   OR2X4_RVT                   0-1           YES           unit          1.672         1.672         1X            comb
+   OR3X1_RVT                   0-1           YES           unit          1.52          1.672         1X            comb
+   OR3X2_RVT                   0-1           YES           unit          1.52          1.672         1X            comb
+   OR3X4_RVT                   0-1           YES           unit          2.432         1.672         1X            comb
+   OR4X1_RVT                   0-1           YES           unit          2.128         1.672         1X            comb
+   OR4X2_RVT                   0-1           YES           unit          2.28          1.672         1X            comb
+   OR4X4_RVT                   0-1           YES           unit          2.584         1.672         1X            comb
+   PGX1_RVT                    0-1           YES           unit          0.76          1.672         1X            comb
+   PGX2_RVT                    0-1           YES           unit          0.912         1.672         1X            comb
+   PGX4_RVT                    0-1           YES           unit          1.216         1.672         1X            comb
+   PMT1_RVT                    0-1           YES           unit          0.76          1.672         1X            comb
+   PMT2_RVT                    0-1           YES           unit          0.912         1.672         1X            comb
+   PMT3_RVT                    0-1           YES           unit          1.216         1.672         1X            comb
+   RDFFARX1_RVT                0-1           YES           unit          8.968         1.672         1X            seq,as(c)
+   RDFFARX2_RVT                0-1           YES           unit          9.272         1.672         1X            seq,as(c)
+   RDFFNARX1_RVT               0-1           YES           unit          8.968         1.672         1X            seq,as(c)
+   RDFFNARX2_RVT               0-1           YES           unit          9.272         1.672         1X            seq,as(c)
+   RDFFNSRARX1_RVT             0-1           YES           unit          8.208         1.672         1X            seq,as(c,p)
+   RDFFNSRARX2_RVT             0-1           YES           unit          8.512         1.672         1X            seq,as(c,p)
+   RDFFNSRASRNX1_RVT           0-1           YES           unit          8.36          1.672         1X            seq,as(c,p)
+   RDFFNSRASRNX2_RVT           0-1           YES           unit          8.512         1.672         1X            seq,as(c,p)
+   RDFFNSRASRQX1_RVT           0-1           YES           unit          8.36          1.672         1X            seq,as(c,p)
+   RDFFNSRASRQX2_RVT           0-1           YES           unit          8.512         1.672         1X            seq,as(c,p)
+   RDFFNSRASRX1_RVT            0-1           YES           unit          8.512         1.672         1X            seq,as(c,p)
+   RDFFNSRASRX2_RVT            0-1           YES           unit          8.816         1.672         1X            seq,as(c,p)
+   RDFFNSRASX1_RVT             0-1           YES           unit          8.512         1.672         1X            seq,as(c,p)
+   RDFFNSRASX2_RVT             0-1           YES           unit          8.816         1.672         1X            seq,as(c,p)
+   RDFFNSRX1_RVT               0-1           YES           unit          7.904         1.672         1X            seq,as(c,p)
+   RDFFNSRX2_RVT               0-1           YES           unit          8.208         1.672         1X            seq,as(c,p)
+   RDFFNX1_RVT                 0-1           YES           unit          8.36          1.672         1X            seq
+   RDFFNX2_RVT                 0-1           YES           unit          8.664         1.672         1X            seq
+   RDFFSRARX1_RVT              0-1           YES           unit          8.208         1.672         1X            seq,as(c,p)
+   RDFFSRARX2_RVT              0-1           YES           unit          8.512         1.672         1X            seq,as(c,p)
+   RDFFSRASRX1_RVT             0-1           YES           unit          8.512         1.672         1X            seq,as(c,p)
+   RDFFSRASRX2_RVT             0-1           YES           unit          8.816         1.672         1X            seq,as(c,p)
+   RDFFSRASX1_RVT              0-1           YES           unit          8.512         1.672         1X            seq,as(c,p)
+   RDFFSRASX2_RVT              0-1           YES           unit          8.816         1.672         1X            seq,as(c,p)
+   RDFFSRSSRX1_RVT             0-1           YES           unit          9.12          1.672         1X            seq,as(c,p)
+   RDFFSRSSRX2_RVT             0-1           YES           unit          9.424         1.672         1X            seq,as(c,p)
+   RDFFSRX1_RVT                0-1           YES           unit          7.904         1.672         1X            seq,as(c,p)
+   RDFFSRX2_RVT                0-1           YES           unit          8.208         1.672         1X            seq,as(c,p)
+   RDFFX1_RVT                  0-1           YES           unit          8.36          1.672         1X            seq
+   RDFFX2_RVT                  0-1           YES           unit          8.664         1.672         1X            seq
+   RSDFFARX1_RVT               0-1           YES           unit          10.792        1.672         1X            seq,as(c),t
+   RSDFFARX2_RVT               0-1           YES           unit          11.096        1.672         1X            seq,as(c),t
+   RSDFFNARX1_RVT              0-1           YES           unit          10.792        1.672         1X            seq,as(c),t
+   RSDFFNARX2_RVT              0-1           YES           unit          11.096        1.672         1X            seq,as(c),t
+   RSDFFNSRARX1_RVT            0-1           YES           unit          10.032        1.672         1X            seq,as(c,p),t
+   RSDFFNSRARX2_RVT            0-1           YES           unit          10.336        1.672         1X            seq,as(c,p),t
+   RSDFFNSRASRNX1_RVT          0-1           YES           unit          10.488        1.672         1X            seq,as(c,p),t
+   RSDFFNSRASRNX2_RVT          0-1           YES           unit          10.488        1.672         1X            seq,as(c,p),t
+   RSDFFNSRASRQX1_RVT          0-1           YES           unit          10.184        1.672         1X            seq,as(c,p),t
+   RSDFFNSRASRQX2_RVT          0-1           YES           unit          10.336        1.672         1X            seq,as(c,p),t
+   RSDFFNSRASRX1_RVT           0-1           YES           unit          10.336        1.672         1X            seq,as(c,p),t
+   RSDFFNSRASRX2_RVT           0-1           YES           unit          10.64         1.672         1X            seq,as(c,p),t
+   RSDFFNSRASX1_RVT            0-1           YES           unit          10.336        1.672         1X            seq,as(c,p),t
+   RSDFFNSRASX2_RVT            0-1           YES           unit          10.64         1.672         1X            seq,as(c,p),t
+   RSDFFNSRX1_RVT              0-1           YES           unit          9.728         1.672         1X            seq,as(c,p),t
+   RSDFFNSRX2_RVT              0-1           YES           unit          10.032        1.672         1X            seq,as(c,p),t
+   RSDFFNX1_RVT                0-1           YES           unit          10.184        1.672         1X            seq,t
+   RSDFFNX2_RVT                0-1           YES           unit          10.488        1.672         1X            seq,t
+   RSDFFSRARX1_RVT             0-1           YES           unit          10.032        1.672         1X            seq,as(c,p),t
+   RSDFFSRARX2_RVT             0-1           YES           unit          10.336        1.672         1X            seq,as(c,p),t
+   RSDFFSRASRX1_RVT            0-1           YES           unit          10.336        1.672         1X            seq,as(c,p),t
+   RSDFFSRASRX2_RVT            0-1           YES           unit          10.64         1.672         1X            seq,as(c,p),t
+   RSDFFSRASX1_RVT             0-1           YES           unit          10.336        1.672         1X            seq,as(c,p),t
+   RSDFFSRASX2_RVT             0-1           YES           unit          10.64         1.672         1X            seq,as(c,p),t
+   RSDFFSRSSRX1_RVT            0-1           YES           unit          9.88          1.672         1X            seq,as(c,p),t
+   RSDFFSRSSRX2_RVT            0-1           YES           unit          10.184        1.672         1X            seq,as(c,p),t
+   RSDFFSRX1_RVT               0-1           YES           unit          9.728         1.672         1X            seq,as(c,p),t
+   RSDFFSRX2_RVT               0-1           YES           unit          10.032        1.672         1X            seq,as(c,p),t
+   RSDFFX1_RVT                 0-1           YES           unit          10.184        1.672         1X            seq,t
+   RSDFFX2_RVT                 0-1           YES           unit          10.488        1.672         1X            seq,t
+   SDFFARX1_RVT                0-1           YES           unit          5.472         1.672         1X            seq,as(c),t
+   SDFFARX2_RVT                0-1           YES           unit          5.776         1.672         1X            seq,as(c),t
+   SDFFASRSX1_RVT              0-1           YES           unit          6.08          1.672         1X            seq,as(c,p),t
+   SDFFASRSX2_RVT              0-1           YES           unit          6.232         1.672         1X            seq,as(c,p),t
+   SDFFASRX1_RVT               0-1           YES           unit          6.08          1.672         1X            seq,as(c,p),t
+   SDFFASRX2_RVT               0-1           YES           unit          6.08          1.672         1X            seq,as(c,p),t
+   SDFFASX1_RVT                0-1           YES           unit          5.472         1.672         1X            seq,as(p),t
+   SDFFASX2_RVT                0-1           YES           unit          5.776         1.672         1X            seq,as(p),t
+   SDFFNARX1_RVT               0-1           YES           unit          5.472         1.672         1X            seq,as(c),t
+   SDFFNARX2_RVT               0-1           YES           unit          5.776         1.672         1X            seq,as(c),t
+   SDFFNASRX1_RVT              0-1           YES           unit          5.776         1.672         1X            seq,as(c,p),t
+   SDFFNASRX2_RVT              0-1           YES           unit          6.08          1.672         1X            seq,as(c,p),t
+   SDFFNASX1_RVT               0-1           YES           unit          5.472         1.672         1X            seq,as(p),t
+   SDFFNASX2_RVT               0-1           YES           unit          5.776         1.672         1X            seq,as(p),t
+   SDFFNX1_RVT                 0-1           YES           unit          5.168         1.672         1X            seq,t
+   SDFFNX2_RVT                 0-1           YES           unit          5.472         1.672         1X            seq,t
+   SDFFSSRX1_RVT               0-1           YES           unit          5.32          1.672         1X            seq,t
+   SDFFSSRX2_RVT               0-1           YES           unit          5.624         1.672         1X            seq,t
+   SDFFX1_RVT                  0-1           YES           unit          5.168         1.672         1X            seq,t
+   SDFFX2_RVT                  0-1           YES           unit          5.472         1.672         1X            seq,t
+   SHFILL128_RVT               0-1           YES           unit          19.456        1.672         1X            fil
+   SHFILL1_RVT                 0-1           YES           unit          0.152         1.672         1X            fil
+   SHFILL2_RVT                 0-1           YES           unit          0.304         1.672         1X            fil
+   SHFILL3_RVT                 0-1           YES           unit          0.456         1.672         1X            fil
+   SHFILL64_RVT                0-1           YES           unit          9.728         1.672         1X            fil
+   TIEH_RVT                    0-1           YES           unit          0.76          1.672         1X            comb
+   TIEL_RVT                    0-1           YES           unit          0.76          1.672         1X            comb
+   TNBUFFX16_RVT               0-1           YES           unit          5.168         1.672         1X            comb
+   TNBUFFX1_RVT                0-1           YES           unit          1.976         1.672         1X            comb
+   TNBUFFX2_RVT                0-1           YES           unit          2.128         1.672         1X            comb
+   TNBUFFX32_RVT               0-1           YES           unit          10.488        1.672         1X            comb
+   TNBUFFX4_RVT                0-1           YES           unit          2.432         1.672         1X            comb
+   TNBUFFX8_RVT                0-1           YES           unit          3.496         1.672         1X            comb
+   XNOR2X1_RVT                 0-1           YES           unit          2.584         1.672         1X            comb
+   XNOR2X2_RVT                 0-1           YES           unit          2.736         1.672         1X            comb
+   XNOR3X1_RVT                 0-1           YES           unit          3.648         1.672         1X            comb
+   XNOR3X2_RVT                 0-1           YES           unit          3.8           1.672         1X            comb
+   XOR2X1_RVT                  0-1           YES           unit          2.584         1.672         1X            comb
+   XOR2X2_RVT                  0-1           YES           unit          2.736         1.672         1X            comb
+   XOR3X1_RVT                  0-1           YES           unit          4.256         1.672         1X            comb
+   XOR3X2_RVT                  0-1           YES           unit          4.408         1.672         1X            comb
+
+
+1

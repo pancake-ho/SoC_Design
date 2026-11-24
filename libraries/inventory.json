@@ -1,0 +1,23 @@
+{
+  "schema": "ee470.library-inventory.v1",
+  "status": "SHARED_DICE_FULL_PVT",
+  "ready_for_full_macro_ndm_synthesis": true,
+  "standard_cells_full_pvt": {
+    "status": "EXTERNAL_READ_ONLY",
+    "path": "/home/soc/common/saed32_ndm_20261112/full_pvt/saed32_rvt_ss_tt_ff.ndm",
+    "panes": [
+      "SS",
+      "TT",
+      "FF"
+    ]
+  },
+  "sram": {
+    "status": "EXTERNAL_READ_ONLY",
+    "path": "/home/soc/common/saed32_ndm_20261112/full_pvt/saed32_sram_ss_tt_ff.ndm",
+    "panes": [
+      "SS",
+      "TT",
+      "FF"
+    ]
+  }
+}

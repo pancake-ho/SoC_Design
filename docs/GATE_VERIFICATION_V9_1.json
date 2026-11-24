@@ -1,0 +1,214 @@
+{
+  "release": "v9.1",
+  "date": "2026-11-19",
+  "vcs": "V-2023.12-SP2-1",
+  "dc": "V-2023.12-SP5",
+  "gate_f12_passed": 6,
+  "gate_f12_scenarios": {
+    "FF1P16VN40C_CMAX": {
+      "functional_status": "PASS",
+      "gate_status": "PASS",
+      "sdf_complete": true,
+      "timing_model_warnings": [],
+      "setup_wns_ns": 5.0109,
+      "hold_wns_ns": -0.4315,
+      "sta_pass": false,
+      "checks": 24287,
+      "errors": 0,
+      "protocol_errors": 0,
+      "npu_timing": {
+        "absolute_delay_ps": -101,
+        "busy_delay_ps": 171,
+        "busy_edge_ps": 188425000,
+        "busy_edge_to_done_ps": 1058400070,
+        "busy_ps": 188425171,
+        "busy_to_done_ps": 1058399899,
+        "clock_latency_ps": 0,
+        "cycle_component_ps": 1058400000,
+        "cycles": 105840,
+        "done_delay_ps": 70,
+        "done_edge_ps": 1246825000,
+        "done_ps": 1246825070,
+        "injected_abs_delay_ps": 0,
+        "period_ps": 10000
+      }
+    },
+    "FF1P16VN40C_CMIN": {
+      "functional_status": "PASS",
+      "gate_status": "PASS",
+      "sdf_complete": true,
+      "timing_model_warnings": [],
+      "setup_wns_ns": 5.0422,
+      "hold_wns_ns": -0.4319,
+      "sta_pass": false,
+      "checks": 24287,
+      "errors": 0,
+      "protocol_errors": 0,
+      "npu_timing": {
+        "absolute_delay_ps": -99,
+        "busy_delay_ps": 169,
+        "busy_edge_ps": 188425000,
+        "busy_edge_to_done_ps": 1058400070,
+        "busy_ps": 188425169,
+        "busy_to_done_ps": 1058399901,
+        "clock_latency_ps": 0,
+        "cycle_component_ps": 1058400000,
+        "cycles": 105840,
+        "done_delay_ps": 70,
+        "done_edge_ps": 1246825000,
+        "done_ps": 1246825070,
+        "injected_abs_delay_ps": 0,
+        "period_ps": 10000
+      }
+    },
+    "SS0P95V125C_CMAX": {
+      "functional_status": "PASS",
+      "gate_status": "MODEL_CHECK_WARNING",
+      "sdf_complete": true,
+      "timing_model_warnings": [
+        "WSUM"
+      ],
+      "setup_wns_ns": 0.5755,
+      "hold_wns_ns": -0.3122,
+      "sta_pass": false,
+      "checks": 24287,
+      "errors": 0,
+      "protocol_errors": 0,
+      "npu_timing": {
+        "absolute_delay_ps": -304,
+        "busy_delay_ps": 524,
+        "busy_edge_ps": 188425000,
+        "busy_edge_to_done_ps": 1058400220,
+        "busy_ps": 188425524,
+        "busy_to_done_ps": 1058399696,
+        "clock_latency_ps": 0,
+        "cycle_component_ps": 1058400000,
+        "cycles": 105840,
+        "done_delay_ps": 220,
+        "done_edge_ps": 1246825000,
+        "done_ps": 1246825220,
+        "injected_abs_delay_ps": 0,
+        "period_ps": 10000
+      }
+    },
+    "SS0P95V125C_CMIN": {
+      "functional_status": "PASS",
+      "gate_status": "MODEL_CHECK_WARNING",
+      "sdf_complete": true,
+      "timing_model_warnings": [
+        "WSUM"
+      ],
+      "setup_wns_ns": 0.6417,
+      "hold_wns_ns": -0.3133,
+      "sta_pass": false,
+      "checks": 24287,
+      "errors": 0,
+      "protocol_errors": 0,
+      "npu_timing": {
+        "absolute_delay_ps": -299,
+        "busy_delay_ps": 518,
+        "busy_edge_ps": 188425000,
+        "busy_edge_to_done_ps": 1058400219,
+        "busy_ps": 188425518,
+        "busy_to_done_ps": 1058399701,
+        "clock_latency_ps": 0,
+        "cycle_component_ps": 1058400000,
+        "cycles": 105840,
+        "done_delay_ps": 219,
+        "done_edge_ps": 1246825000,
+        "done_ps": 1246825219,
+        "injected_abs_delay_ps": 0,
+        "period_ps": 10000
+      }
+    },
+    "TT1P05V25C_CMAX": {
+      "functional_status": "PASS",
+      "gate_status": "MODEL_CHECK_WARNING",
+      "sdf_complete": true,
+      "timing_model_warnings": [
+        "NTCDNC",
+        "WSUM"
+      ],
+      "setup_wns_ns": 3.7344,
+      "hold_wns_ns": -0.3852,
+      "sta_pass": false,
+      "checks": 24287,
+      "errors": 0,
+      "protocol_errors": 0,
+      "npu_timing": {
+        "absolute_delay_ps": -177,
+        "busy_delay_ps": 304,
+        "busy_edge_ps": 188425000,
+        "busy_edge_to_done_ps": 1058400127,
+        "busy_ps": 188425304,
+        "busy_to_done_ps": 1058399823,
+        "clock_latency_ps": 0,
+        "cycle_component_ps": 1058400000,
+        "cycles": 105840,
+        "done_delay_ps": 127,
+        "done_edge_ps": 1246825000,
+        "done_ps": 1246825127,
+        "injected_abs_delay_ps": 0,
+        "period_ps": 10000
+      }
+    },
+    "TT1P05V25C_CMIN": {
+      "functional_status": "PASS",
+      "gate_status": "MODEL_CHECK_WARNING",
+      "sdf_complete": true,
+      "timing_model_warnings": [
+        "NTCDNC",
+        "WSUM"
+      ],
+      "setup_wns_ns": 3.772,
+      "hold_wns_ns": -0.3859,
+      "sta_pass": false,
+      "checks": 24287,
+      "errors": 0,
+      "protocol_errors": 0,
+      "npu_timing": {
+        "absolute_delay_ps": -174,
+        "busy_delay_ps": 300,
+        "busy_edge_ps": 188425000,
+        "busy_edge_to_done_ps": 1058400126,
+        "busy_ps": 188425300,
+        "busy_to_done_ps": 1058399826,
+        "clock_latency_ps": 0,
+        "cycle_component_ps": 1058400000,
+        "cycles": 105840,
+        "done_delay_ps": 126,
+        "done_edge_ps": 1246825000,
+        "done_ps": 1246825126,
+        "injected_abs_delay_ps": 0,
+        "period_ps": 10000
+      }
+    }
+  },
+  "extra_gate_tests": {
+    "F01": {
+      "checks": 237,
+      "errors": 0,
+      "protocol_errors": 0
+    },
+    "F10": {
+      "checks": 167578,
+      "errors": 0,
+      "protocol_errors": 0
+    }
+  },
+  "rtl_public_passed": 12,
+  "mapped_sha256": "7d960e3ed4d03cade7160c6b6da5228aef329edf57264b5f321538edc0d5dc7c",
+  "vector_sha256": "14f6e703fd06ffc161004f479c562078d3b31292a2bc970c405dbefe79d5f949",
+  "source_sha256": {
+    "rtl/npu.v": "b71968e8e4437e7c3ff4441280635639a4a7dd32502268213b465162f1f84771",
+    "rtl/sram_wrapper.v": "3e017ba84138c90d4c0107a2113f15d03e085f0cbc8b610543ec208422f3ecdb",
+    "rtl/soc_system.v": "281b4ff67c0e90fda21b5ceeb70e53477ef69a069b95366a8fc7e8dab622a6a4",
+    "synth/topo_ndm.tcl": "b37975c160c75a3a755fab2a6a9d5ea011ee6c0e98ce6d006750d2a0537515f1"
+  },
+  "all_scenarios_qualified": false,
+  "common_sdc_unchanged": true,
+  "forced_initialization": false,
+  "timing_checks_disabled": false,
+  "boundary_only_trial_fixed": false,
+  "reset_preservation_fixed": true
+}

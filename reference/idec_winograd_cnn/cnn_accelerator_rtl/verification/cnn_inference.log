@@ -1,0 +1,22 @@
+NUM_IMAGES=       1000
+image=0 decision=0 inclusive_cycles=836
+image=99 decision=9 inclusive_cycles=836
+image=199 decision=9 inclusive_cycles=836
+image=299 decision=9 inclusive_cycles=836
+image=399 decision=9 inclusive_cycles=836
+image=499 decision=9 inclusive_cycles=836
+image=599 decision=9 inclusive_cycles=836
+image=699 decision=9 inclusive_cycles=836
+image=799 decision=9 inclusive_cycles=836
+image=899 decision=9 inclusive_cycles=836
+image=999 decision=9 inclusive_cycles=836
+CNN INFERENCE COMPLETE: images=1000 inclusive_cycles_min=836 max=836 avg=836.000
+ELAPSED CYCLES: min=835 max=835 avg=835.000
+Cycle convention: pixel[0] capture=1; elapsed edge intervals=inclusive_cycles-1.
+ACCURACY: 990/1000 (99.00%), labels=index modulo 10
+ACCURACY CHECKPOINT PASS: 990/1000 (99.00%)
+PYTHON ORACLE PASS: predictions=1000 FC scores=10000
+- tb/tb_cnn_inference.sv:198: Verilog $finish
+- S i m u l a t i o n   R e p o r t: Verilator 5.49
+- Verilator: $finish at 9ms; walltime 1.151 s; speed 7.415 ms/s
+- Verilator: cpu 1.150 s on 1 threads; allocated 7 MB

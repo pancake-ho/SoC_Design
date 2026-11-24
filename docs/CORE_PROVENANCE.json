@@ -1,0 +1,43 @@
+{
+  "source_url": "https://pages.hmc.edu/harris/class/e85/old/fall24/RISCVsingle.sv.txt",
+  "sha256": "81156e7123707c5bcf5fd9d01532cad240b46e8a25d0db4dbfcd3e7a1588a327",
+  "school_W10_source": "NOT_FOUND_IN_READABLE_PATHS",
+  "changes": [
+    [
+      "mmodule aludec",
+      "module aludec"
+    ],
+    [
+      "ALUDec  ad(",
+      "aludec  ad("
+    ],
+    [
+      "ALU         ALU(",
+      "alu         ALU("
+    ],
+    [
+      "logic       ALUSrc, RegWrite, Jump, Zero;",
+      "logic       ALUSrc, RegWrite, Jump, Zero, PCSrc;"
+    ],
+    [
+      "RF(clk, RegWrite,",
+      "RF(clk, RegWrite && !reset,"
+    ],
+    [
+      "result = sum[31];",
+      "result = {31'b0,($signed(a) < $signed(b))};"
+    ],
+    [
+      "original free-running PC and RegFile",
+      "step_en gates PC and register writes while synchronous SRAM is pending"
+    ]
+  ],
+  "normalized_sha256": "29a682d455e496c7f42b4dcab1f9e797d30e053ee28f07236c6230dab79db2ff",
+  "omitted_modules": [
+    "testbench",
+    "top",
+    "imem",
+    "dmem"
+  ],
+  "ports_preserved": "Public project_top ports preserved. Internal RISCVsingle adds step_en."
+}
