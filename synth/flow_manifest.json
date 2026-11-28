@@ -11,7 +11,8 @@
     "FF1P16VN40C_CMAX",
     "FF1P16VN40C_CMIN"
   ],
-  "clock_ns": 10,
+  "default_clock_period_ps": 10000,
+  "submitted_clock_scope": "one CORE_CLK period per team across all six scenarios",
   "baseline_macro": "SRAM1RW512x32",
   "minimum_real_sram_instances": 2,
   "ndm_status": "EXTERNAL_FULL_PVT",
@@ -22,8 +23,9 @@
   "clock_model": "ideal",
   "gate_scope": "tb_project.adapter.dut",
   "sdf_per_scenario": true,
-  "hold_fix_request": "set_fix_hold CORE_CLK",
-  "release": "v9.2",
+  "hold_fix_request": "set_fix_hold on clocks in each scenario",
+  "release": "v10.4",
+  "f12_verification": "post-DONE result LW through public project_top commit ports",
   "sdf_annotation_status": "VERIFIED_SIX_SCENARIOS_20261117",
   "workload": {
     "input": [

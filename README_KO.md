@@ -1,6 +1,50 @@
+# EE470 Winograd 제안 설계
+
+`proposed/`에서 실행합니다. 팀 Winograd NPU는 `rtl/npu.v`와 `rtl/winograd/`에 있으며 `starter/rtl/`에는 공식 v10.4 기준 RTL을 둡니다. 기본 실행은 팀 RTL을 사용합니다.
+
+```bash
+# dice 서버에서 공개 RTL 회귀
+bash scripts/run.sh --suite public --macro
+
+# 합성 → 6개 코너 게이트 F12/SAIF → 전력·에너지
+(cd synth && bash run.sh)
+python3 synth/gate_timing.py --saif
+python3 synth/power_saif.py --gate-run <GATE_RUN_DIR>
+```
+
+`<GATE_RUN_DIR>`에는 게이트 실행이 출력한 실제 경로를 입력합니다. 평가용 게이트 실행에는 교수자가 지정한 F12 snapshot과 SHA-256을 `--replay-f12`와 `--evaluation-sha256`로 전달합니다. v9.3에서 합성한 결과는 이번 공개 top 포트 변경으로 재합성이 필요합니다.
+
+아래는 공식 배포본의 안내와 개정 이력입니다.
+
+# EE470 프로젝트 v10.4
+
+최신 변경점은 [v10.4 릴리즈 노트](docs/RELEASE_NOTES_v10_4_KO.md)를 보세요. [F12의 공개 CPU commit 검사](docs/F12_COMMIT_READBACK_KO.md)에서 결과 읽기와 로그를 확인할 수 있습니다.
+
+2026년 11월 26일 교강사 검토본. SRAM은 SoC 안에 둡니다. RTL·게이트 판정은 공개 포트와 고정 논리 주소를 사용합니다. F12는 연습에서 랜덤 데이터를 생성하고, 평가에서 동일한 벡터와 SHA256을 사용합니다. [테스트벤치 설명](docs/TESTBENCH_V10_KO.md)과 [블록도·주소 계약](docs/F12_BOUNDARY_KO.md)을 먼저 읽으세요. [v10 릴리즈 노트](docs/RELEASE_NOTES_v10_KO.md)
+
+## 이전 릴리즈 기록
+
+### 2026-11-25 v9.4.2 ICG SDF 호환 수정
+
+[변경점·검증·적용 방법](docs/RELEASE_NOTES_v9_4_2_KO.md)
+
+## 2026-11-25 v9.4.1 ICG 호환 수정
+
+v9.4 SAIF 기준을 유지하면서 CGLPPRX2_RVT의 역전 timing-check window를 실행용 SDF에서 보수적으로 복구합니다. 재합성 없이 게이트·SAIF 전력을 다시 실행합니다. 공통 SDC와 학생의 hold 보정 책임은 유지합니다. [변경점](docs/RELEASE_NOTES_v9_4_1_KO.md), [적용 방법](docs/ICG_TIMING_KO.md).
+
+# v9.4 게이트 SAIF 활동 연결 수정
+
+배열 비트 활동 오매핑과 실제 미연결 출력 핀의 판정 오류를 수정했습니다.
+전체 측정 조건과 공통 SDC는 유지하며 hold는 각 조가 해결합니다.
+적용·실행 방법은 [SAIF 안내서](docs/POWER_SAIF_KO.md), 변경점은
+[v9.4 릴리즈 노트](docs/RELEASE_NOTES_v9_4_KO.md)를 확인하세요.
+같은 v9.3 설계와 기존 --saif VCD를 보관했다면 전력만 다시 실행할 수 있습니다.
+
+---
+
 # v9.3 SAIF 전력 측정 개정
 
-게이트 SDF로 기능·실제 지연을 확인한 뒤, 같은 F12의 NPU BUSY–DONE 활동으로
+게이트 SDF로 기능·실제 지연을 확인한 뒤, 같은 F12의 측정용 리셋 해제–유효 DONE 구간 활동으로
 CPU·모든 SRAM·NPU를 포함한 project_top의 전력을 여섯 코너에서 계산합니다.
 기존 RTL·ISA·포트·메모리 계약·입력 크기·공통 SDC·배점은 유지합니다.
 자세한 실행 방법과 자격 기준은 [POWER_SAIF_KO.md](docs/POWER_SAIF_KO.md)에 있습니다.
@@ -83,7 +127,7 @@ F07은 12개 확장 프레임입니다. 포화·wrap × 양·음 overflow를 각
 ## CPU 통합과 성능
 
 F01은 CNN과 별개로 Harris 13개 필수 명령을 모두 실제 실행합니다.
-F12는 TB가 공통 포트로 입력을 적재한 뒤 CPU가 CONFIG·START·polling·전체 raw/Yq 읽기와 checksum 확인을 수행합니다.
+F12는 TB가 공통 포트로 입력을 적재한 뒤 측정용 리셋을 해제합니다. CPU가 CONFIG·START·polling·전체 raw/Yq 읽기와 checksum 확인을 수행합니다.
 TB는 checksum 외에도 모든 1,568개 raw/Yq 워드를 독립 golden과 직접 비교합니다.
 큰 입력을 위한 상수 ROM 확장을 피하고, CPU의 실행과 NPU 제어를 분리해 확인하는 구성입니다.
 
@@ -91,7 +135,7 @@ NPU 처리 한도는 262,144 cycles, CPU MMIO SRAM 전송 한도는 기존 16 cy
 기준형은 메모리 접근에 진행이 없으면 32 cycles에 오류로 중단합니다. 정상 응답 지연은 0–15 cycles입니다.
 결과의 cnn_cycles·cnn_reads·cnn_writes로 연산 시간과 논리 메모리 접근을 비교합니다.
 내부 캐시·뱅크 접근 수는 팀이 추가 계측해 구분합니다. 이 논리 카운터를 실제 SRAM 전력으로 환산하지 않습니다.
-시작 전에 계산·정답·필터 연산을 미리 수행하여 BUSY–DONE 비용을 숨기지 않습니다.
+NPU는 유효 START를 받은 후 읽기·연산·저장을 스스로 수행합니다. 타이밍 비교는 측정용 리셋 해제부터 결과 저장을 알리는 DONE 상승까지이며, 동적 데이터는 공통 입력에서 읽어 사용합니다.
 
 ## 합성과 게이트 검증
 
@@ -105,8 +149,8 @@ python3 synth/gate_timing.py
 SAED32 표준셀·SRAM NDM은 기존 /home/soc/common/saed32_ndm_20261112/full_pvt/ 절대경로를 직접 참조합니다.
 DC NXT Topographical 단계까지이며 Fusion place-and-route는 요구하지 않습니다.
 동일 mapped netlist의 SS/TT/FF × CMAX/CMIN 여섯 시나리오에서 setup·hold를 검사합니다.
-클록 주기는 EE470_CLK_PERIOD_PS, ideal source latency는 EE470_CLK_LATENCY_PS로 설정합니다.
-공통 I/O delay·uncertainty·load·예외를 수정해 위반을 숨기지 않습니다. set_fix_hold와 합성 최적화를 활용합니다.
-SDF 측정 시간은 Δcycle×period + DONE pin offset − BUSY pin offset입니다.
+외부 clk의 주기는 조별로 정합니다. `EE470_CLK_PERIOD_PS` 또는 팀 SDC의 CORE_CLK에 지정합니다. `bash run.sh --sdc ../team.sdc`로 추가 SDC를 읽습니다.
+[리셋·입출력 규약과 타이밍 수치](synth/README_KO.md)는 모든 조에 공통입니다. Hold 위반은 set_fix_hold와 데이터 경로 최적화로 보정합니다.
+SDF 실행시간은 측정용 rst_n 상승부터 유효한 NPU DONE 상승까지 관측한 실제 시간입니다.
 NTCDNC·WSUM 등 timing check 완화 경고가 있으면 MODEL_CHECK_WARNING으로 기록하여 완전한 타이밍 검증과 구분합니다.
 검증 완료 범위와 알려진 제한은 docs/VALIDATION.md에 명시합니다.

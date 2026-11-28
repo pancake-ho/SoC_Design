@@ -1,0 +1,30 @@
+{
+  "synth/saed_icg_sdf.py": {
+    "old": [
+      null,
+      "4f8d4a60f853b42ed0832c6f0fae2b4dbd25e0af38131471a87a3923f95266a7"
+    ],
+    "new": "c28ab41ff231a7627e2ac0978772f02ae8da8845a43c5fc6fc2f554ab398b992"
+  },
+  "synth/gate_timing.py": {
+    "old": [
+      "a1f930c871ab18dce20331957a5a5cfc352280511e7be4116eda8cac5078ab84",
+      "72f53ca5e135535c74a6bb8a7ca88e751460c1625a28c46c6a2edde92645bf88"
+    ],
+    "new": "e9af7d6b0a0951b48531732b00f2a41f4056881f3413048b78c387f8e5bc11b6"
+  },
+  "docs/RELEASE_NOTES_v9_4_2_KO.md": {
+    "old": [
+      null,
+      null
+    ],
+    "new": "04355738894cca6edab45891e7f7c03bc2bb82f1f9277c9a8c1fbe3e473651ee"
+  },
+  "README_KO.md": {
+    "old": [
+      "ed36232eaef2f554986df4eb255e1b0622d38d281e3ef25289f496aef78e5bba",
+      "2156d1f644ba19b45167b6c6f6a05b73d0f05b2141dd35d7242c32fd3cded2de"
+    ],
+    "new": "347b52c595f5057eebc4028247f9be9b8d8ebf95b379e56a65f2564870e9208d"
+  }
+}

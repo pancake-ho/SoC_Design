@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/'scripts'))
 from runner import execute, save
 from gate_timing import SCENARIOS, PDK
+from saif_audit import audit as audit_saif
 
 
 def sha(path):
@@ -66,6 +67,27 @@ def annotation_counts(report):
     return counts
 
 
+def memory_model_observation(report):
+    """Retain the library's memory-group values, including negative internal power."""
+    factors = dict(W=1., mW=1e-3, uW=1e-6, nW=1e-9, pW=1e-12)
+    number = r'([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)'
+    row = re.search(r'^memory\s+'+r'\s+'.join([number]*4),report,re.M)
+    dynamic = re.search(r'Dynamic Power Units\s*=\s*'+number+r'\s*(mW|uW|nW|pW|W)',report)
+    leakage = re.search(r'Leakage Power Units\s*=\s*'+number+r'\s*(mW|uW|nW|pW|W)',report)
+    if not row or not dynamic or not leakage:
+        raise ValueError('Missing memory-group power model evidence')
+    dyn_unit = float(dynamic[1])*factors[dynamic[2]]
+    leak_unit = float(leakage[1])*factors[leakage[2]]
+    values = dict(internal_W=float(row[1])*dyn_unit, switching_W=float(row[2])*dyn_unit,
+                  leakage_W=float(row[3])*leak_unit, total_W=float(row[4])*dyn_unit)
+    if any(not math.isfinite(v) for v in values.values()):
+        raise ValueError('Non-finite memory-group power')
+    values['negative_internal_model_value'] = values['internal_W']<0
+    values['zero_leakage_model_value'] = values['leakage_W']==0
+    values['raw_values_preserved'] = True
+    return values
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--gate-run', required=True, type=Path,
@@ -95,10 +117,18 @@ def main():
     run = Path(tempfile.mkdtemp(prefix='power_saif_', dir=str(synth)))
     print('POWER_RUN_DIR='+str(run), flush=True)
     provenance = dict(mapped_sha256=sha(mapped), ddc_sha256=sha(ddc),
-                      vector_sha256=summary['vector_sha256'], case='F12', seed=470,
-                      scope='tb_project/adapter/dut', window='first NPU BUSY rise through first DONE rise',
+                      vector_sha256=summary['vector_sha256'], case='F12', seed=summary['seed'],
+                      evaluation_vector_verified=summary['evaluation_vector_verified'],
+                      scope='tb_project/adapter/dut', window='workload reset release through checked NPU DONE rise',
                       clock_period_ps=summary['clock_period_ps'], clock_latency_ps=summary['clock_latency_ps'],
-                      model='DC Topographical pre-CTS pre-route estimate; ideal clock', scenarios={})
+                      extra_sdc_sha256=summary.get('extra_sdc_sha256'),
+                      model='DC Topographical pre-CTS pre-route estimate; ideal clock',
+                      activity_mapping='gate_level_exact_names_without_RTL_name_mapping',
+                      library_power_model_limitations=[
+                          'SAED32 educational SRAM models can report negative internal power and zero leakage.',
+                          'Preserve vendor values and include every SRAM. Do not clamp, invent leakage or remove macros.',
+                          'This comparison is a model-based pre-route estimate, not characterized SRAM signoff power.'],
+                      scenarios={})
     lines = ['file mkdir work reports', 'source '+tcl_path(ROOT/'synth/library_setup.tcl'),
              'set power_target_library $target_library', 'set power_link_library $link_library',
              'read_ddc '+tcl_path(ddc), 'current_design project_top',
@@ -115,7 +145,9 @@ def main():
                   'set_tlu_plus_files -max_tluplus '+tcl_path(rc_file)+' -min_tluplus '+tcl_path(rc_file)+' -tech2itf_map '+tcl_path(rc_map)]
     lines += ['if {![link]} {error "Power DDC link failed"}',
              'report_reference -hierarchy > reports/references.rpt',
-             'report_units > reports/units.rpt']
+             'report_units > reports/units.rpt',
+             'source '+tcl_path(ROOT/'synth/saif_audit.tcl'),
+             'ee470_capture_connectivity reports/pin_connectivity.tsv']
     for name in SCENARIOS:
         result = summary['scenarios'][name]
         if result['gate_status'] != 'PASS' or not result.get('sdf_complete'):
@@ -124,8 +156,10 @@ def main():
             raise ValueError('SDF changed after gate run: '+name)
         case = gate/name
         raw = json.loads((case/'raw_result.json').read_text())
-        begin, end = raw['npu_busy_ps'], raw['npu_done_ps']
-        if not 0 <= begin < end or raw['errors'] or raw['protocol_errors']:
+        begin, end = raw['workload_reset_ps'], raw['npu_done_ps']
+        if end-begin != result['npu_timing']['execution_time_ps']:
+            raise ValueError('SAIF and execution time checkpoints disagree: '+name)
+        if not 0 <= raw['workload_load_complete_ps'] < begin < end or raw['errors'] or raw['protocol_errors']:
             raise ValueError('Invalid checked F12 measurement window: '+name)
         vcd = case/'activity.vcd'
         with vcd.open() as stream:
@@ -146,7 +180,7 @@ def main():
         duration = re.search(r'\(DURATION\s+(\d+)\)', text)
         saif_scale = re.search(r'\(TIMESCALE\s+(\d+)\s+(fs|ps|ns)\)',text)
         if not duration or not saif_scale or int(duration[1])*tick_ps(saif_scale[1],saif_scale[2]) != end-begin:
-            raise ValueError('SAIF duration does not match BUSY to DONE: '+name)
+            raise ValueError('SAIF duration does not match reset release to valid output: '+name)
         if not re.search(r'\(TC\s+[1-9]\d*\)',text):
             raise ValueError('SAIF has no transitions: '+name)
         provenance['scenarios'][name] = dict(begin_ps=begin,end_ps=end,duration_ps=end-begin,
@@ -154,9 +188,10 @@ def main():
             saif_sha256=sha(saif),vcd_sha256=sha(vcd),sdf_sha256=result['sdf_sha256'],
             sta_pass=result['sta_pass'],gate_status=result['gate_status'])
         lines += ['current_scenario '+name, 'reset_switching_activity',
-                  'read_saif -input '+tcl_path(saif)+' -instance_name tb_project/adapter/dut -auto_map_names',
+                  'if {![read_saif -input '+tcl_path(saif)+' -instance_name tb_project/adapter/dut]} {error "No gate activity annotated"}',
                   'propagate_switching_activity',
                   'report_saif -hierarchy -missing > reports/'+name+'_annotation.rpt',
+                  'ee470_capture_activity reports/'+name,
                   'report_power -analysis_effort high -hierarchy > reports/'+name+'_hierarchy.rpt',
                   'report_power -analysis_effort high > reports/'+name+'_power.rpt',
                   'puts "EE470_SAIF_POWER_READY '+name+'"']
@@ -169,6 +204,12 @@ def main():
     log = (run/'dc_power.log').read_text(errors='replace')
     if status or re.search(r'^Error:',log,re.M) or 'EE470_SAIF_POWER_COMPLETE' not in log:
         raise ValueError('DC SAIF power analysis failed; inspect '+str(run/'dc_power.log'))
+    units = (run/'reports/units.rpt').read_text()
+    unit_match = re.search(r'Time_unit\s*:\s*([0-9.eE+-]+)\s+Second',units)
+    if not unit_match or not math.isfinite(float(unit_match[1])) or float(unit_match[1])<=0:
+        raise ValueError('Missing positive library time unit')
+    time_unit_ns = float(unit_match[1])*1e9
+    provenance['library_time_unit_ns'] = time_unit_ns
     for name in SCENARIOS:
         report = (run/'reports'/(name+'_power.rpt')).read_text()
         annotation = (run/'reports'/(name+'_annotation.rpt')).read_text()
@@ -176,17 +217,31 @@ def main():
             raise ValueError('Missing SAIF annotation evidence: '+name)
         missing = annotation_counts(annotation)
         provenance['scenarios'][name]['non_annotated'] = missing
-        provenance['scenarios'][name]['activity_coverage_complete'] = not any(missing.values())
+        activity = audit_saif(run/(name+'.saif'),run/'reports'/(name+'_net_activity.rpt'),
+            run/'reports'/(name+'_pin_activity.rpt'),run/'reports/pin_connectivity.tsv',
+            run/'reports'/(name+'_annotation.rpt'),time_unit_ns,
+            port_report=run/'reports'/(name+'_port_activity.rpt'))
+        save(run/'reports'/(name+'_activity_audit.json'),activity)
+        provenance['scenarios'][name]['activity_coverage_complete'] = activity['activity_coverage_complete']
+        provenance['scenarios'][name]['activity_audit'] = {
+            key:value for key,value in activity.items() if not isinstance(value,list)}
+        provenance['scenarios'][name]['disconnected_output_pin_count'] = len(activity['disconnected_output_pins'])
+        provenance['scenarios'][name]['unresolved_non_annotated_pin_count'] = len(activity['unresolved_non_annotated_pins'])
         provenance['scenarios'][name].update(power_values(report))
-        print(name+' total_W='+str(provenance['scenarios'][name]['total_W']),flush=True)
+        provenance['scenarios'][name]['memory_model_observation'] = memory_model_observation(report)
+        print(name+' total_W='+str(provenance['scenarios'][name]['total_W'])+
+              ' bitwise_mismatches='+str(activity['bitwise_mismatch_count'])+
+              ' activity_coverage_complete='+str(activity['activity_coverage_complete']),flush=True)
         provenance['scenarios'][name]['energy_J'] = provenance['scenarios'][name]['total_W']*provenance['scenarios'][name]['duration_ps']*1e-12
     provenance['measurement_complete'] = True
     provenance['all_timing_qualified'] = summary['all_scenarios_qualified']
     provenance['activity_coverage_complete'] = all(s['activity_coverage_complete'] for s in provenance['scenarios'].values())
-    provenance['common_power_eligible'] = (summary['common_performance_eligible'] and provenance['activity_coverage_complete']
-        and summary['clock_period_ps']==10000 and summary['clock_latency_ps']==0)
+    provenance['common_power_eligible'] = (summary['common_performance_eligible']
+        and summary['evaluation_vector_verified'] and provenance['activity_coverage_complete'])
     provenance['diagnostic_worst_total_W'] = max(s['total_W'] for s in provenance['scenarios'].values())
     provenance['qualified_worst_total_W'] = provenance['diagnostic_worst_total_W'] if provenance['common_power_eligible'] else None
+    provenance['diagnostic_worst_energy_J'] = max(s['energy_J'] for s in provenance['scenarios'].values())
+    provenance['qualified_worst_energy_J'] = provenance['diagnostic_worst_energy_J'] if provenance['common_power_eligible'] else None
     save(run/'power_summary.json',provenance)
     print('SAIF_POWER_MEASUREMENT_COMPLETE common_power_eligible='+str(provenance['common_power_eligible']),flush=True)
     return 0

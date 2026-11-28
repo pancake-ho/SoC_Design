@@ -9,8 +9,20 @@ module project_top (
     output wire commit_valid, output wire [31:0] commit_pc,
     output wire [31:0] commit_insn, output wire [4:0] commit_rd,
     output wire [31:0] commit_wdata,
-    input wire [7:0] reserved_in, output wire [7:0] reserved_out
+    input wire [7:0] reserved_in, output wire [7:0] reserved_out,
+    input wire [7:0] rp_aux_in0, rp_aux_in1, rp_aux_in2,
+    input wire [7:0] rp_aux_in3, rp_aux_in4, rp_aux_in5, rp_aux_in6,
+    output wire [7:0] rp_aux_out0, rp_aux_out1, rp_aux_out2,
+    output wire [7:0] rp_aux_out3, rp_aux_out4, rp_aux_out5, rp_aux_out6
 );
+    // Optional expansion buses. Official workloads drive all auxiliary inputs low.
+    assign rp_aux_out0 = 8'b0;
+    assign rp_aux_out1 = 8'b0;
+    assign rp_aux_out2 = 8'b0;
+    assign rp_aux_out3 = 8'b0;
+    assign rp_aux_out4 = 8'b0;
+    assign rp_aux_out5 = 8'b0;
+    assign rp_aux_out6 = 8'b0;
     soc_system u_soc (
         .clk(clk), .rst_n(rst_n),
         .host_valid(host_valid), .host_write(host_write),

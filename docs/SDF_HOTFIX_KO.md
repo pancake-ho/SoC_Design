@@ -33,7 +33,7 @@ python3 synth/gate_timing.py --scenario SS0P95V125C_CMAX
 - gate_status는 F12 동작, 프로토콜, 체크포인트 측정값과 타이밍 위반을 종합한 시나리오별 결과입니다.
 - sta_pass는 해당 시나리오의 setup·hold 리포트를 함께 확인한 결과입니다.
 - all_scenarios_qualified는 여섯 시나리오의 STA와 게이트 검증이 모두 통과했는지 나타냅니다.
-- 공통 10 ns·latency 0 조건에서 자격을 충족하면 common_performance_eligible가 true가 되고, 최악 시나리오의 BUSY–DONE 시간이 qualified_worst_busy_to_done_ps에 기록됩니다.
+- 당시 v8.1 판정은 공통 10 ns·latency 0의 BUSY–DONE을 사용했습니다. 현재 조건과 결과 필드는 [v10.2 테스트벤치 안내](TESTBENCH_V10_KO.md)를 따릅니다.
 
 각 시나리오 폴더에는 compile.log, simulation.log, sram_annotation.json이 생성됩니다.
 원본 SDF 해시와 적용용 SDF 해시를 함께 보관해 보고서의 실행 근거로 사용하세요.

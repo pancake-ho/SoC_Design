@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import random
+import secrets
 import sys
 from golden import INT32_MAX, INT32_MIN, dot_products, raw_sums, narrow_int32, requant
 from workload import X_COUNT, W_COUNT, BIAS_COUNT, OUT_COUNT, X_BASE, W_BASE, BIAS_BASE, NPU_TIMEOUT, FRAME_WORDS
@@ -85,17 +86,29 @@ def make_vectors(case, seed, overflow_rate=F07_OVERFLOW_RATE):
                 [(10,2,False),(-10,2,False),(200,0,False),(-200,0,False),
                  (3,1,False),(-3,1,False),(16384,15,False),(-16384,15,False),(-10,2,True)]]
     if case=='F07': return random_f07(seed,overflow_rate)
+    if case=='F12':
+        rng=random.Random(seed)
+        return [([rng.randint(-128,127) for _ in range(X_COUNT)],
+                 [rng.randint(-128,127) for _ in range(W_COUNT)],
+                 [rng.randint(-4096,4095) for _ in range(4)],7,True,True)]
     return [base]
 
-def generate(out, case, profile, seed=470, custom=None, overflow_rate=F07_OVERFLOW_RATE, replay=None):
+def generate(out, case, profile, seed=None, custom=None, overflow_rate=F07_OVERFLOW_RATE, replay=None):
+    if seed is None:
+        seed=secrets.randbits(32)
     saved=None
     if replay:
         saved=json.loads(Path(replay).read_text())
-        if case!='F07' or saved.get('schema')!='ee470.f07.v2' or saved.get('case')!='F07':
-            raise ValueError('replay requires v9 F07 snapshot; v8 is incompatible')
-        seed,overflow_rate,frames=saved['seed'],saved['overflow_rate_percent'],saved['frames']
-        if type(seed) is not int or type(overflow_rate) is not int or not 0<=overflow_rate<=100 or len(frames)!=F07_FRAMES:
-            raise ValueError('invalid F07 metadata')
+        schemas={'F07':'ee470.f07.v2','F12':'ee470.f12.v1'}
+        if case not in schemas or saved.get('schema')!=schemas[case] or saved.get('case')!=case:
+            raise ValueError('replay requires the matching F07 or F12 snapshot')
+        seed,frames=saved['seed'],saved['frames']
+        if type(seed) is not int or not isinstance(frames,list) or len(frames)!=(F07_FRAMES if case=='F07' else 1):
+            raise ValueError('invalid replay seed or frame count')
+        if case=='F07':
+            overflow_rate=saved['overflow_rate_percent']
+            if type(overflow_rate) is not int or not 0<=overflow_rate<=100:
+                raise ValueError('invalid F07 overflow rate')
     elif custom:
         value=json.loads(Path(custom).read_text())
         frames=[(v['x'],v['w'],v['bias'],v['shift'],v['relu'],v.get('satfinite',True)) for v in value['frames']]
@@ -115,10 +128,11 @@ def generate(out, case, profile, seed=470, custom=None, overflow_rate=F07_OVERFL
         words += [config] + [v&255 for v in x+w] + list(b) + raw + [v&255 for v in q]
     encoded=''.join('{:08x}\n'.format(v&0xffffffff) for v in words).encode('ascii')
     vector_hash=hashlib.sha256(encoded).hexdigest()
-    if saved is not None and saved.get('vector_sha256')!=vector_hash: raise ValueError('F07 replay checksum mismatch')
+    if saved is not None and saved.get('vector_sha256')!=vector_hash: raise ValueError('replay checksum mismatch')
     if case=='F07' and any(count==0 for by_sign in modes.values() for count in by_sign.values()):
         raise ValueError('positive/negative overflow in both modes required')
-    snapshot=dict(schema='ee470.f07.v2' if case=='F07' else 'ee470.vectors.v2',case=case,seed=seed,
+    schemas={'F07':'ee470.f07.v2','F12':'ee470.f12.v1'}
+    snapshot=dict(schema=schemas.get(case,'ee470.vectors.v2'),case=case,seed=seed,
                   frames=frames,shape=[16,16,1,3,3,4],vector_sha256=vector_hash)
     if case=='F07': snapshot['overflow_rate_percent']=overflow_rate
     out=Path(out); out.mkdir(parents=True,exist_ok=False)
@@ -133,15 +147,19 @@ def generate(out, case, profile, seed=470, custom=None, overflow_rate=F07_OVERFL
     (out/'isa_trace.hex').write_text('{:08x}\n'.format(len(trace))+''.join('{:08x}\n'.format(v) for row in trace for v in row))
     meta=dict(frames=len(frames),words=len(words),frame_words=FRAME_WORDS,shape=[16,16,1,3,3,4],macs_per_frame=7056,
               isa_words=len(isa.code),isa_trace=len(trace),integration_words=len(program.code),
-              cpu_start_pc=program.labels['start_store'],seed=seed,vector_sha256=vector_hash,
+              cpu_start_pc=program.labels['start_store'],
+              f12_readback_pcs={key:program.labels[key] for key in
+                                ('output_addr_first','output_addr_next','read_output','output_lw')},
+              seed=seed,vector_sha256=vector_hash,
               overflow_expected_frames=len(set(overflow['positive']+overflow['negative'])),
               overflow_frame_indices=overflow,overflow_by_mode=modes)
     if case=='F07': meta.update(overflow_rate_percent=overflow_rate,minimum_overflow_per_sign=F07_MIN_PER_SIGN,replayed=saved is not None)
+    if case=='F12': meta['replayed']=saved is not None
     (out/'metadata.json').write_text(json.dumps(meta,indent=2)+'\n'); return meta
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(); parser.add_argument('--case'); parser.add_argument('--out')
-    parser.add_argument('--profile',default='config/public_profile.json'); parser.add_argument('--seed',type=int,default=470)
+    parser.add_argument('--profile',default='config/public_profile.json'); parser.add_argument('--seed',type=int)
     parser.add_argument('--rtl-defines',action='store_true'); args=parser.parse_args(); profile=validate_profile(args.profile)
     if args.rtl_defines: print(' '.join(rtl_defines(profile)))
     elif not args.case or not args.out: parser.error('--case and --out are required')
