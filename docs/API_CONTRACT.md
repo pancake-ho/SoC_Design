@@ -3,7 +3,9 @@
 기존 수업의 `project/shared/rtl/project_top.v` 포트 계약을 그대로 유지했습니다.
 `clk`, active-low `rst_n`, `host_valid/host_write/host_addr/host_wdata`, `host_ready/host_rdata/host_error`,
 `start/boot_addr`, `busy/done/trap`, `commit_valid/commit_pc/commit_insn/commit_rd/commit_wdata`,
-8-bit `reserved_in/reserved_out`입니다. 추가 관측 로직을 합성 top에 넣으면 모든 팀의 area/power에 포함합니다.
+8비트 `reserved_in`, `reserved_out`, `rp_aux_in0`~`rp_aux_in6`,
+`rp_aux_out0`~`rp_aux_out6`입니다. RP는 Reserved Port입니다. 입력 8개·출력 8개, 포트당 8비트입니다.
+기존 `reserved_in/out`의 비트 의미를 유지합니다. `rp_aux_in*`는 공식 TB에서 0으로 구동하고, 확장 출력은 기준형에서 0으로 연결합니다. 확장 포트에 추가한 로직도 area·energy에 포함합니다.
 공개 `project_top` 포트를 유지합니다. 내부 Harris 데이터패스에는 SRAM 응답을 기다리기 위한 `step_en`을 연결합니다. 출처와 변경점은 [provenance](CORE_PROVENANCE.json)에 있습니다.
 
 ## CPU와 host
@@ -53,11 +55,8 @@ CPU 전송 timeout은 16 cycles, NPU timeout은 262144 cycles입니다. reset은
 
 ## SRAM 및 CNN
 
-CNN/MMIO의 논리 요청은 `req_valid/req_ready/req_write/req_addr[10:0]/req_wdata[31:0]`,
-`rsp_valid/rsp_error/rsp_rdata[31:0]`입니다. 주소는 word index, outstanding은 한 건, response backpressure는 없습니다.
-내부 요청 주소는 word index 0..2047이며 CPU 예약 word 320..383은 CNN/MMIO로 접근하지 않습니다.
-E0 수락, E0 직후 동기 read 출력 갱신, E1 직후 response valid, 요청자는 E2에서 관찰합니다.
-accept 전 payload를 유지하고 accept 후 valid를 내려 중복 요청을 막습니다.
+기준 RTL의 내부 CNN 메모리는 word 주소와 단일 outstanding의 valid/ready 요청·응답 포트를 사용합니다. 이 포트, 응답 사이클, 내부 물리 뱅크는 기준 구현의 선택입니다.
+공개 SRAM 주소는 byte offset입니다. CNN/MMIO에서 CPU 예약 word 320..383에 접근하지 않습니다.
 
 | SRAM byte offset | 내용 |
 |---|---|
@@ -68,7 +67,14 @@ accept 전 payload를 유지하고 accept 후 valid를 내려 중복 요청을 �
 | 0x1240~0x1E7C | Yq 784개, filter→row→column, low8 signed INT8·upper24=0 |
 
 X[16][16]·W[4][3][3]·bias[4]에서 raw/Yq[4][14][14]를 계산합니다. index=f*196+r*14+c입니다.
-공통 TB가 지정 주소·형식으로 입력을 적재하고 F12 CPU가 START와 전체 출력 읽기를 수행합니다. INT8 입력 워드 상위 24비트는 0이며, 실행 중 공통 입력을 보존합니다.
+공통 TB가 지정 주소·형식으로 입력을 적재하고 F12 CPU가 START와 전체 출력 읽기를 수행합니다. 공식 검사기는 DONE 이후 CPU LW의 값을 공개 commit으로 비교합니다. SRAM 래퍼의 포트·계층과 레지스터 파일 계층은 팀이 결정합니다. INT8 입력 워드 상위 24비트는 0이며 실행 중 공통 입력을 보존합니다.
+
+유효 START를 한 번 수락하면 NPU가 CONFIG를 보관하고 메모리 읽기, 연산, 결과 쓰기를 자체 제어합니다.
+파이프라인 깊이, PE 배치·병렬도, FSM, 내부 캐시·패킹은 팀이 정합니다. 개별 결과에 3사이클 제한을 두지 않습니다.
+공개 포트·주소·형식·오류 동작을 지키며 지정 주소에서 전체 결과를 읽을 수 있을 때 DONE을 올립니다.
+F12는 초기 리셋 → 공개 host를 통한 입력과 프로그램 적재 → 측정용 리셋 → CPU START 순서입니다. 측정용 리셋에서 적재 내용을 보존합니다. 평가 시간은 이 리셋 해제부터 유효 DONE까지입니다.
+
+예를 들어 Xq[0]이 −7이면 host를 통해 SRAM_ADDR(0x40C)에 0x0000, SRAM_WDATA(0x410)에 0x000000F9, SRAM_CMD(0x414)에 WRITE를 기록합니다. DUT가 이 논리 주소를 실제 물리 SRAM 뱅크와 word에 대응시킵니다. TB는 내부 계층에 쓰지 않습니다.
 공통 입출력은 1864워드입니다. CNN 창 0x0000–0x1FFF 안에서 고정 입출력과 CPU 예약 0x0500–0x05FF를 제외한 정렬 워드는 임시 사용이 가능합니다.
 연산용 내부 패킹, 추가 메모리, 뱅크와 인덱스 배치는 자유입니다. 모든 구현에서 공통 입출력 주소와 데이터 형식을 지킵니다.
 
@@ -99,3 +105,7 @@ Python `round()`나 음수 `>>>`만으로 대체하지 않습니다. ONNX bit-ex
 NPU는 각 필터별 bias와 9개 곱을 누산합니다. baseline은 최종 raw·Yq 한 쌍을 쓴 뒤 다음 출력으로 진행합니다. 모든 부분합의 전체 배열 저장은 요구하지 않습니다.
 
 NPU의 개별 요청에서 진행이 없으면 기준형은 32 cycles에 오류를 냅니다. 전체 실행 한도 262144와 CPU 전송 한도 16을 구분합니다.
+
+## 공개 타이밍 조건
+
+`clk`의 주기는 조별로 선택합니다. 공개 `clk`의 나머지 속성, `rst_n` 계약, 포트와 신호의 의미, 입력 delay·transition·출력 delay·load, clock uncertainty는 [공통 타이밍 조건](../synth/README_KO.md)을 따릅니다. 내부 NPU 클록과 내부 경로는 팀 SDC에서 기술합니다.

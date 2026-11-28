@@ -11,9 +11,11 @@ task wait_host_transfer;
     output [31:0] value;
     integer cycle;
     begin : wait_ready
+        last_host_accepted_while_npu_busy=0;
         for(cycle=0;cycle<32;cycle=cycle+1) begin
             @(posedge clk);
             if(host_ready===1'b1) begin
+                last_host_accepted_while_npu_busy=reserved_out[0]===1'b1;
                 value=host_rdata;
                 check32("host_access_error",0,host_error);
                 disable wait_ready;
@@ -131,10 +133,10 @@ task load_frame;
     input integer frame;
     integer j,base;
     begin
-        initialize_outputs;
         base=1+FRAME_WORDS*frame;
         for(j=0;j<CNN_WORDS;j=j+1)
             if(input_slot(j)>=0) sram_write(j*4,input_payload(frame,input_slot(j)));
+        initialize_outputs;
         bus_write(MMIO,2); bus_write(MMIO+8,{24'b0,vectors[base][7:0]});
     end
 endtask

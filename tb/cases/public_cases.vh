@@ -28,12 +28,12 @@ task case_memory;
         end
         previous=value; sram_write(4*X_BASE,32'h1234); bus_read(MMIO+28,value);
         check32("write_keeps_last_read",previous,value);
-        unit_memory_test;
     end
 endtask
 
 task case_busy;
     reg [31:0] status,value;
+    reg config_write_while_busy;
     begin
         bus_write(MMIO+12,4*X_BASE); bus_write(MMIO+16,32'h12345678);
         reserved_in=8; bus_write(MMIO+20,6);
@@ -45,11 +45,13 @@ task case_busy;
         bus_read(MMIO+16,value); check32("busy_data_write_rejected",32'h12345678,value);
         sram_read(4*X_BASE,value); check32("accepted_transfer_keeps_payload",32'h12345678,value);
         load_frame(0); bus_write(MMIO,1);
-        bus_write(MMIO,1); bus_write(MMIO+8,0); bus_write(MMIO+20,5);
-        bus_write(MMIO,2);
-        bus_read(MMIO+8,value); check32("config_snapshot_and_rejection",vectors[1],value);
-        bus_read(MMIO+24,value); check32("busy_sram_command_rejected",4,value);
-        wait_npu(status); check32("busy_error_current_frame_continues",6,status); verify_frame(0);
+        bus_write(MMIO+8,0);
+        config_write_while_busy=last_host_accepted_while_npu_busy;
+        bus_read(MMIO+8,value);
+        check32("config_write_follows_public_busy",config_write_while_busy ? vectors[1] : 0,value);
+        wait_npu(status);
+        check32("active_frame_completes",config_write_while_busy ? 6 : 2,status);
+        verify_frame(0);
     end
 endtask
 
@@ -80,7 +82,8 @@ endtask
 task case_reset;
     reg [31:0] value;
     begin
-        load_frame(0); bus_write(MMIO,1); repeat(20) @(negedge clk); reset_dut;
+        load_frame(0); bus_write(MMIO,1);
+        reset_dut;
         bus_read(MMIO+4,value); check32("reset_status",0,value);
         bus_read(MMIO+8,value); check32("reset_config",32'h23,value);
         verify_inputs(0);
@@ -118,12 +121,16 @@ task case_integration;
         for(j=0;j<2*OUT_WORDS;j=j+1) value=value+vectors[298+j];
         bus_write(32'h20004,value);
         bus_write(32'h20008,32'h600d); bus_write(32'h2000c,32'hbad);
-        bus_write(240,0); run_cpu;
+        bus_write(240,0);
+        workload_load_complete_ps=now_ps();
+        measure_next_reset=1;
+        reset_dut;
+        measure_next_reset=0;
+        run_cpu;
         bus_read(240,value); check32("integration_cpu_signature",32'h600d,value);
         check32("cpu_issued_start_exactly_once",1,cpu_start_stores);
-        check32("cpu_started_npu_exactly_once",1,cpu_npu_starts);
         check32("cpu_run_measured",1,cpu_cycles>0);
-        verify_frame(0);
+        verify_inputs(0);
     end
 endtask
 

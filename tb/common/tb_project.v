@@ -27,9 +27,10 @@ module tb_project;
     wire [31:0] host_rdata,commit_pc,commit_insn,commit_wdata;
     wire [4:0] commit_rd;
     wire [7:0] reserved_out;
-    wire observe_accept,observe_response,observe_npu_owner,observe_write,observe_valid,observe_ready;
-    wire [10:0] observe_address;
-    wire [31:0] observe_wdata;
+    wire [7:0] rp_aux_in0=8'b0, rp_aux_in1=8'b0, rp_aux_in2=8'b0;
+    wire [7:0] rp_aux_in3=8'b0, rp_aux_in4=8'b0, rp_aux_in5=8'b0, rp_aux_in6=8'b0;
+    wire [7:0] rp_aux_out0, rp_aux_out1, rp_aux_out2;
+    wire [7:0] rp_aux_out3, rp_aux_out4, rp_aux_out5, rp_aux_out6;
     dut_adapter adapter(.*);
     `ifndef EE470_CLK_PERIOD_PS
     `define EE470_CLK_PERIOD_PS 10000
@@ -49,33 +50,18 @@ module tb_project;
 
     integer checks=0,errors=0,cycle_count=0,protocol_errors=0;
     integer overflow_frames_passed=0;
-    integer last_cnn_cycles=0,cnn_start_cycle=0,cpu_start_pc=0,cpu_start_stores=0;
-    integer cpu_start_cycle=0,cpu_cycles=0,cpu_npu_starts=0;
+    integer cpu_start_pc=0,cpu_start_stores=0;
+    integer cpu_start_cycle=0,cpu_cycles=0;
     integer trace_index=0,program_count=0,dummy,waves=0,power_capture=0;
-    reg trace_enabled=0,previous_npu_done=0,previous_npu_busy=0;
-    integer cnn_reads=0,last_cnn_reads=0,cnn_writes=0,last_cnn_writes=0;
-    reg memory_outstanding=0,outstanding_npu=0,request_stalled=0;
-    reg [43:0] held_request=0;
+    reg trace_enabled=0,last_host_accepted_while_npu_busy=0;
     reg [8*48-1:0] first_failure=0;
     reg [8*16-1:0] case_name;
     reg [8*4096-1:0] vector_path,program_path,trace_path;
     reg [31:0] vectors[0:186500],program_words[0:255],trace_words[0:2047];
-    reg u_valid=0,u_write=0,u_reset=1;
-    reg [5:0] u_addr=0;
-    reg [31:0] u_data=0;
-    reg [3:0] u_delay=0;
-    wire u_ready,u_rsp,u_error;
-    wire [31:0] u_rdata;
-`ifndef EE470_GATE_LEVEL
-    sram_wrapper unit_memory(.clk(clk),.reset(u_reset),.req_valid(u_valid),.req_write(u_write),
-        .req_addr(u_addr),.req_wdata(u_data),.req_ready(u_ready),.rsp_valid(u_rsp),
-        .rsp_error(u_error),.rsp_rdata(u_rdata),.fault_delay(u_delay),.fault_error(1'b0),
-        .fault_drop(1'b0),.fault_stall(1'b0));
-`endif
     `include "npu_checkpoint.vh"
+    `include "f12_readback.vh"
     `include "checker.vh"
     `include "driver.vh"
-    `include "unit_wrapper.vh"
     `include "monitor.vh"
     `include "public_cases.vh"
     `include "student_cases.vh"
@@ -102,8 +88,9 @@ module tb_project;
                 dummy=$value$plusargs("TRACE=%s",trace_path); $readmemh(trace_path,trace_words);
             end
             dummy=$value$plusargs("START_PC=%d",cpu_start_pc);
+            if(case_name=="F12") require_f12_readback_pcs;
         end
-        reset_dut; u_reset=0;
+        reset_dut;
         if(case_name=="S01") run_student_cases;
         else run_public_case;
         finish_case;

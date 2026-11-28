@@ -1,0 +1,42 @@
+{
+  "synth/power_saif.py": {
+    "old": "800afe64a171cd96cca0670dd85fce4ff7785d5514881513b174aede6e7ca81b",
+    "new": "cd41b3842c43361a6789db454a1fe861c947811d9cb800f1d42d866ac8133983"
+  },
+  "synth/saif_audit.py": {
+    "old": null,
+    "new": "92b75887bfe7f47ab672903198f0906aff94d6fcf99a66c91acb0fc2300074e1"
+  },
+  "synth/saif_audit.tcl": {
+    "old": null,
+    "new": "3298c82836f02aba1e080c0b748497c9dabfb4cb9e54510d272c60ba8f1822b6"
+  },
+  "docs/POWER_SAIF_KO.md": {
+    "old": "6ce0e0509f6601bce7272fec46219be2174ad9db4d9a65b443af3700c89982e6",
+    "new": "82e68535aa39305ba12181a21b2bf782a66615095704995f0517319ffca9da06"
+  },
+  "docs/RELEASE_NOTES_v9_4_KO.md": {
+    "old": null,
+    "new": "44f777a3c90bc374bf361d142e3e22e68acf03dc35d6932aedd544e56ffb862e"
+  },
+  "docs/POWER_VERIFICATION_v9_4_KO.md": {
+    "old": null,
+    "new": "2aea1894df6c06df18067ce61a5e89bcd7d5ab56aee2b09362212a506fea07d5"
+  },
+  "docs/POWER_VERIFICATION_KO.md": {
+    "old": "c49873435f93bbffc3297ef77b2a395eff39979f69a9213a84e987d0fc2cf538",
+    "new": "2aea1894df6c06df18067ce61a5e89bcd7d5ab56aee2b09362212a506fea07d5"
+  },
+  "docs/RUBRIC.md": {
+    "old": "4663228d501121ef4093278a90a0ba7133ec0b1349c178e3481e29fa4ce8aa00",
+    "new": "0dbc0e1a921b8e3bd5f0d952cac36c30db8332df5b75b28b82e7b33bca08d662"
+  },
+  "synth/README_KO.md": {
+    "old": "933b24568b897e17f10882425cfed192ff1ea016f54939ff129f597adb2ef0a8",
+    "new": "60cd0faf8716f886329012e3abaece449a94fa100c6d9154bc11024a4bf55646"
+  },
+  "README_KO.md": {
+    "old": "4e67fdfab56a3afd9dbe0dc93a672cdb6a85b6113581bad933536247b2a3d1dd",
+    "new": "ed36232eaef2f554986df4eb255e1b0622d38d281e3ef25289f496aef78e5bba"
+  }
+}

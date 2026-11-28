@@ -19,6 +19,26 @@ PRIVATE=RELEASE.parent/'instructor_private'
 PUBLIC=['F{:02d}'.format(i) for i in range(1,13)]
 sys.path.insert(0,str(RELEASE/'model'))
 from vectors import F07_OVERFLOW_RATE,generate,rtl_defines,validate_profile
+from workload import OUT_COUNT
+
+
+def f12_commit_args(meta):
+    pcs = meta['f12_readback_pcs']
+    return ['+F12_ADDR_FIRST_PC='+str(pcs['output_addr_first']),
+            '+F12_ADDR_NEXT_PC='+str(pcs['output_addr_next']),
+            '+F12_ADDR_STORE_PC='+str(pcs['read_output']),
+            '+F12_LW_PC='+str(pcs['output_lw'])]
+
+
+def f12_readback_summary(raw):
+    summary = dict(count=raw.get('f12_lw_count'), first_ps=raw.get('f12_first_lw_ps'),
+                   last_ps=raw.get('f12_last_lw_ps'), done_rises=raw.get('npu_done_rises'))
+    timestamps = (raw.get('npu_done_ps'), summary['first_ps'], summary['last_ps'])
+    summary['passed'] = (summary['count']==2*OUT_COUNT and summary['done_rises']==1
+                         and all(type(value) is int for value in timestamps)
+                         and 0 <= timestamps[0] < timestamps[1] <= timestamps[2]
+                         and raw.get('errors')==0 and raw.get('protocol_errors')==0)
+    return summary
 
 
 def save(path,value):
@@ -143,12 +163,14 @@ def run(args):
         meta=generate(folder/'vectors',case,profile,args.seed,
                       RELEASE/'tb/student/example.json' if case=='S01' else None,
                       overflow_rate=F07_OVERFLOW_RATE if args.overflow_rate is None else args.overflow_rate,
-                      replay=args.replay_f07 if case=='F07' else None)
+                      replay=args.replay_f07 if case=='F07' else args.replay_f12 if case=='F12' else None)
         plus=['+CASE='+case,'+VECTORS='+str(folder/'vectors/vectors.hex'),'+WAVES='+str(int(args.waves or args.verdi))]
         if case in ('F01','F12'):
             kind='isa' if case=='F01' else 'integration'
             plus+=['+PROGRAM='+str(folder/('vectors/'+kind+'.hex')),'+PROGRAM_WORDS='+str(meta[kind+'_words']),
                    '+TRACE='+str(folder/'vectors/isa_trace.hex'),'+START_PC='+str(meta['cpu_start_pc'])]
+        if case=='F12':
+            plus+=f12_commit_args(meta)
         simulation=[str(build/'simv')]+plus if args.backend=='vcs' else ['vvp',str(build/'simv')]+plus
         save(folder/'command.json',simulation)
         code=execute(simulation,folder,folder/'simulation.log',args.timeout) if compile_code==0 else compile_code
@@ -160,7 +182,8 @@ def run(args):
             if (code==0 and raw.get('case_id')==case and type(raw.get('checks')) is int and raw['checks']>0
                     and raw.get('errors')==0 and raw.get('protocol_errors')==0 and raw.get('normal_completion') is True
                     and raw.get('overflow_frames_passed')==meta['overflow_expected_frames']
-                    and summary==[(case,str(raw['checks']),'0',str(raw['cycles']))]):
+                    and summary==[(case,str(raw['checks']),'0',str(raw['cycles']))]
+                    and (case!='F12' or f12_readback_summary(raw)['passed'])):
                 status='PASS'
             else: failure=raw.get('first_failure') or 'checker/summary/exit validation failed'
         except (OSError,ValueError,KeyError):
@@ -171,15 +194,16 @@ def run(args):
             checks=raw.get('checks',0),errors=raw.get('errors',1),seed=meta['seed'],cycles=raw.get('cycles'),
             exit_code=code,source_sha256=source_hash,vector_sha256=meta['vector_sha256'],
             first_failure=failure,backend=args.backend,macro=bool(args.macro),
-            cnn_cycles=raw.get('cnn_cycles'),cnn_reads=raw.get('cnn_reads'),cnn_writes=raw.get('cnn_writes'),
             workload=dict(input=[16,16,1],filter=[4,3,3],output=[4,14,14],macs=7056),
-            cpu_cycles=raw.get('cpu_cycles'),cpu_npu_starts=raw.get('cpu_npu_starts'),
+            cpu_cycles=raw.get('cpu_cycles'),
             overflow_expected_frames=meta['overflow_expected_frames'],
             overflow_frames_passed=raw.get('overflow_frames_passed'),
             xq_layout=profile['xq_layout'],wq_layout=profile['wq_layout'],
             raw_result='raw_result.json',simulation_log='simulation.log')
-        if case=='F12' and status=='PASS':
-            result['npu_timing']=npu_timing(raw)
+        if case=='F12':
+            result['commit_readback']=f12_readback_summary(raw)
+            if status=='PASS':
+                result['npu_timing']=npu_timing(raw)
         if case=='F07':
             result.update(overflow_rate_percent=meta['overflow_rate_percent'],
                           overflow_frame_indices=meta['overflow_frame_indices'],
@@ -230,17 +254,30 @@ def npu_timing(raw):
     done_delay = raw['npu_done_ps'] - raw['npu_done_edge_ps']
     cycles = raw['npu_done_cycle'] - raw['npu_busy_cycle']
     elapsed = raw['npu_done_ps'] - raw['npu_busy_ps']
-    if cycles <= 0 or not (0 <= busy_delay < period and 0 <= done_delay < period):
+    if cycles < 0 or elapsed <= 0 or not (0 <= busy_delay < period and 0 <= done_delay < period):
         raise ValueError("invalid NPU pin offsets")
     if elapsed != cycles * period + done_delay - busy_delay:
         raise ValueError('inconsistent NPU checkpoint timing')
+    reset = raw['workload_reset_ps']
+    load_complete = raw['workload_load_complete_ps']
+    first_edge = raw['workload_first_clk_ps']
+    edge_count, remainder = divmod(raw['npu_done_edge_ps'] - first_edge, period)
+    reset_to_edge = first_edge - reset
+    execution = raw['npu_done_ps'] - reset
+    if not 0 <= load_complete < reset < first_edge <= raw['npu_busy_ps'] or not 0 < reset_to_edge <= period or edge_count < 0 or remainder:
+        raise ValueError('invalid reset-to-output timing')
     return dict(cycles=cycles, period_ps=period, clock_latency_ps=raw['clock_latency_ps'],
                 injected_abs_delay_ps=raw.get('injected_abs_delay_ps',0),
                 busy_ps=raw['npu_busy_ps'], done_ps=raw['npu_done_ps'],
                 busy_edge_ps=raw['npu_busy_edge_ps'], done_edge_ps=raw['npu_done_edge_ps'],
                 busy_delay_ps=busy_delay, done_delay_ps=done_delay,
                 absolute_delay_ps=done_delay-busy_delay, cycle_component_ps=cycles*period,
-                busy_to_done_ps=elapsed, busy_edge_to_done_ps=cycles*period+done_delay)
+                busy_to_done_ps=elapsed, busy_edge_to_done_ps=cycles*period+done_delay,
+                workload_reset_ps=reset, workload_first_clk_ps=first_edge,
+                workload_load_complete_ps=load_complete,
+                reset_to_first_edge_ps=reset_to_edge, execution_clock_intervals=edge_count,
+                done_offset_from_core_edge_ps=done_delay,
+                output_valid_ps=raw['npu_done_ps'], execution_time_ps=execution)
 
 
 def main():
@@ -254,11 +291,12 @@ def main():
     parser.add_argument('--clock-period-ps',type=int,default=10000)
     parser.add_argument('--clock-latency-ps',type=int,default=0)
     parser.add_argument('--abs-delay-ps',type=int,default=0,help='F12 RTL-only DONE checkpoint demo delay')
-    parser.add_argument('--seed',type=int,default=470); parser.add_argument('--timeout',type=int,default=180)
+    parser.add_argument('--seed',type=int,help='repeat a practice run with this seed'); parser.add_argument('--timeout',type=int,default=180)
     f07=parser.add_mutually_exclusive_group()
     f07.add_argument('--overflow-rate',type=int,choices=range(101),metavar='0..100',
                      help='probability percentage for F07 slots beyond four mandatory overflow frames')
     f07.add_argument('--replay-f07',type=Path,help='reuse F07 vectors.json from a previous run')
+    parser.add_argument('--replay-f12',type=Path,help='reuse an F12 vectors.json snapshot')
     parser.add_argument('--rtl-root',type=Path); parser.add_argument('--results-root',type=Path)
     parser.add_argument('--team',default='REFERENCE'); parser.add_argument('--official',action='store_true')
     args=parser.parse_args()
@@ -268,13 +306,16 @@ def main():
         parser.error('clock latency must be an integer in ps from 0 to 1000000')
     if not 0 <= args.abs_delay_ps < args.clock_period_ps or args.abs_delay_ps and args.case != 'F12':
         parser.error('synthetic delay requires --case F12 and must be smaller than the period')
-    if args.official and (args.abs_delay_ps or args.clock_period_ps != 10000 or args.clock_latency_ps != 0
-                          or args.seed != 470 or args.overflow_rate is not None or args.replay_f07
+    if args.official and (args.abs_delay_ps or args.clock_latency_ps != 0
+                          or args.seed is None or args.overflow_rate is not None or args.replay_f07
+                          or args.replay_f12 is None
                           or args.profile.resolve() != (RELEASE/'config/public_profile.json').resolve()):
-        parser.error('official runs require common 10 ns clock, zero latency, seed 470 and public profile')
+        parser.error('official runs require the public profile, zero source latency, seed and F12 snapshot')
     if (args.overflow_rate is not None or args.replay_f07) and not (
             args.case=='F07' or args.case is None and args.suite=='public'):
         parser.error('F07 vector options require --case F07 or the public suite')
+    if args.replay_f12 and not (args.case=='F12' or args.case is None and args.suite=='public'):
+        parser.error('F12 replay requires --case F12 or the public suite')
     toolchain=json.loads((RELEASE/'config/toolchain.json').read_text())
     if args.functional_array and (args.macro or args.official):
         parser.error('--functional-array is local only and cannot be combined with --macro or --official')

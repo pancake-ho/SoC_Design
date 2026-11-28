@@ -1,95 +1,89 @@
-# 프로젝트 전력 측정 방법
+# v10.2 실행시간·에너지 측정과 활동 검증
 
-v9.3은 추측한 toggle 비율 대신 실제 SDF 게이트 시뮬레이션에서 생성한 SAIF를 사용합니다.
-SAIF는 Switching Activity Interchange Format입니다. 신호가 0과 1에 머문 시간과 전환 횟수를
-DC NXT Topographical에 전달하여 라이브러리의 internal·switching·leakage power를 계산합니다.
-
-## 같은 연산을 같은 조건으로 비교합니다
-
-- 합성 top은 CPU·IMEM SRAM·DMEM SRAM·NPU를 모두 포함하는 `project_top`입니다.
-- 공식 입력은 공개 F12의 seed 470입니다. 16×16 입력, 3×3 필터 4개, 7,056 MAC과 784개 출력을 계산합니다.
-  허용된 패킹 설정은 유지하되 같은 논리 입력과 golden 결과를 사용합니다.
-- 공식 클록은 기존 공통 10 ns, source latency 0입니다. 공통 SDC의 I/O·uncertainty·load·예외는 바꾸지 않습니다.
-- SS/TT/FF × Cmax/Cmin 여섯 시나리오마다 해당 SDF로 실행한 활동을 해당 코너의 라이브러리에 연결합니다.
-  TT 활동을 다른 모든 코너에 복제하지 않습니다.
-- 창은 외부 `reserved_out[0]`의 첫 NPU_BUSY 상승부터 `reserved_out[1]`의 첫 DONE 상승까지입니다.
-  기존 성능 체크포인트의 1 ps 좌표를 그대로 씁니다. 입력 적재·리셋·결과 덤프는 제외합니다.
-  창 안에서는 CPU·모든 SRAM·NPU의 활동을 포함하며 CPU를 측정 대상에서 제거하지 않습니다.
-- 동일한 논리 작업의 시작·종료로 창을 정하므로 설계별 창 길이는 다를 수 있습니다.
-  짧게 끝난 설계를 긴 idle 시간으로 패딩해 평균 전력을 낮추지 않습니다.
-  평균 전력 W와 함께 에너지 J = 평균 전력 W × 창 길이 s를 별도로 보고합니다.
-
-## 실행 순서
-
-이미 v9.2와 같은 RTL로 합성해 만든 netlist·DDC·SDF·6코너 STA가 있으면 재합성하지 않아도 됩니다.
-RTL이나 공통 구현 조건을 바꿨다면 먼저 새 작업 사본에서 기존 합성을 다시 수행합니다.
+v10 top 포트로 이관한 뒤 새 합성 DDC와 SDF를 생성하세요. 측정용 리셋과 VCD 구간도 v10에서 바뀌었습니다.
 
 ```bash
-# baseline_release 폴더에서 실행합니다.
-python3 scripts/runner.py --suite public --tool vcs
-cd synth
-bash run.sh
-cd ..
-
-# 여섯 SDF 게이트 실행과 DUT 활동을 저장합니다.
+(cd synth && bash run.sh)
 python3 synth/gate_timing.py --saif
-
-# 위 실행에서 출력한 GATE_RUN_DIR를 아래 실제 경로로 바꿉니다.
-python3 synth/power_saif.py --gate-run synth/gate_timing_실제경로
+python3 synth/power_saif.py --gate-run GATE_RUN_DIR
 ```
 
-`gate_timing.py`는 기능과 SDF 검사가 통과해도 STA hold가 음수이면 종료 코드 1을 반환할 수 있습니다.
-이때 `gate_timing_summary.json`의 여섯 `gate_status`가 모두 PASS인 경우 전력 측정은 진단용으로
-진행할 수 있습니다. 기능 실패·X·timeout·불완전한 SDF·모델 경고가 있으면 전력 단계가 중단됩니다.
-종료 코드를 무조건 무시하거나 FAIL 문자열을 지우지 않습니다.
+`GATE_RUN_DIR`에는 앞 단계에서 출력된 실제 경로를 넣으세요. 동일한 설계의 netlist·DDC·SDF·VCD를 사용합니다.
 
-전력 단계는 기존 DDC를 읽고 각 코너에서 다음 명령을 수행합니다. 새로 합성하지 않습니다.
+## 같은 연산과 측정 범위
+
+- Top은 CPU·IMEM SRAM·DMEM SRAM·NPU를 포함하는 project_top입니다. 모든 매크로를 포함합니다.
+- F12의 16×16 입력, 3×3 필터 4개로 7,056 MAC과 784개 출력을 계산합니다. 연습은 랜덤 입력을 생성합니다. 평가 시에는 교수자가 지정한 같은 F12 snapshot과 SHA256을 모든 조와 시나리오에 적용합니다.
+- 제출 클록 주기는 조별로 정합니다. 게이트와 SAIF가 합성에 적용된 실제 주기를 사용합니다. source latency 0, 리셋, 포트 지연·transition·load와 공통 uncertainty는 유지합니다.
+- SS/TT/FF × Cmax/Cmin 각각의 SDF 활동을 해당 코너의 라이브러리에 연결합니다.
+- 사전 적재 후 측정용 `rst_n` 상승부터 유효한 `reserved_out[1]` DONE 상승까지 측정합니다.
+  기존 1 ps 체크포인트 좌표를 사용하며, VCD/SAIF의 실제 timescale을 읽어 정확히 변환합니다.
+- 초기 적재·리셋 인가·후속 읽기·TB 활동은 창 바깥이며, 창 안의 CPU·모든 SRAM·NPU를 포함합니다.
+  빨리 끝난 설계를 idle로 패딩하지 않습니다. W와 J=평균 전력×실행 시간을 함께 기록합니다.
+
+## 수정한 활동 연결
+
+게이트 시뮬레이션과 같은 mapped DDC를 읽습니다. 이 SAIF는 이미 게이트 이름이므로
+RTL 이름 자동 매핑 옵션 -auto_map_names를 사용하지 않습니다.
 
 ```tcl
 current_scenario TT1P05V25C_CMAX
-reset_switching_activity -all
-read_saif -input TT1P05V25C_CMAX.saif \
-    -instance_name tb_project/adapter/dut -auto_map_names
+reset_switching_activity
+read_saif -input TT1P05V25C_CMAX.saif -instance_name tb_project/adapter/dut
+propagate_switching_activity
 report_saif -hierarchy -missing
 report_power -analysis_effort high -hierarchy
 report_power -analysis_effort high
 ```
 
-VCD의 시간 단위가 1 ps 또는 100 fs여도 도구가 읽은 timescale에 맞춰 창 좌표를 변환합니다.
-SAIF의 DURATION × TIMESCALE이 DONE−BUSY와 같은지 검사합니다. 숫자를 그대로 ns로 가정하지 않습니다.
-게이트 시뮬레이션의 SDF·timing check·notifier는 유지합니다.
+도구가 '주석됨'이라고 표시한 것만으로 충분하지 않습니다. v9.4는 실제 연결 net을 따라
+각 비트 SAIF의 상태 시간·전환 횟수와 DC의 net·연결 핀·포트 activity를 대조합니다.
+핀 자체의 SAIF 기록이 있으면 그 기록을 우선합니다. SDF 배선 지연 때문에 핀과 앞단 net의
+전환이 측정 창 경계에서 한 번 달라질 수 있기 때문입니다. 핀 기록이 없으면 연결 net과 비교합니다.
+배열의 한 원소나 다른 비트 값이 붙으면 bitwise_mismatch_count가 증가하고 자동 자격을 주지 않습니다.
+상수 신호는 측정값과 일치하는지 확인합니다. SAIF의 TX/TZ도 별도 기록하며 임의로 0으로 채우지 않습니다.
+SAIF에 직접 없는 net은 STA가 실제 상수 0/1·전환 0으로 판정한 경우를 따로 기록합니다.
+그 밖의 미측정 비상수 net은 통과시키지 않습니다.
+X 시간을 제외한 known-state 확률과 도구의 기본 inertial-glitch 환산을 같은 단위로 비교합니다.
 
-## 어떤 파일을 읽고 제출하나요
+미주석 핀은 실제 연결 정보로 분류합니다. **방향이 output이고 연결 net이 0개인 핀만**
+활동 coverage 분모에서 제외합니다. 해당 셀 자체의 internal·leakage power는 계속 포함합니다.
+연결된 핀·net·포트의 미주석 항목이나 값 불일치는 그대로 실패입니다. 미연결 input까지 면제하지 않습니다.
+따라서 raw missing 개수가 커져도 실제 비트 연결이 정확하고 모두 NC output이면 통과할 수 있습니다.
+raw missing이 적거나 0이어도 값이 다른 비트에 붙었다면 실패입니다.
+PWR-452처럼 SAIF의 일부 이름이 DDC에 없다는 원본 경고도 보존합니다. 경고 개수만으로
+통과시키지 않고 실제 DDC의 연결 net·핀·포트 coverage와 비트 감사 결과를 함께 확인합니다.
 
-`POWER_RUN_DIR`에 여섯 SAIF, 변환 명령·로그, DC 스크립트·로그, 코너별 activity annotation,
-hierarchical power, power summary, `power_summary.json`이 생성됩니다.
-기준형의 여섯 DUT VCD는 약 9 GB였습니다. 충분한 임시 공간을 준비하고, VCD 해시는
-1 MB씩 나누어 계산해 큰 파일 전체를 메모리에 올리지 않습니다. SAIF와 로그를 검토한 후
-대용량 VCD는 별도 보관하거나 본인의 생성 산출물만 정리할 수 있습니다.
-`internal_W`, `switching_W`, `dynamic_W`, `leakage_W`, `total_W`, `energy_J`는 단위가 이름에 있습니다.
-dynamic은 internal+switching이며 total에는 leakage도 포함합니다.
-`mW`, `µW`, `pW`가 한 리포트 안에 섞일 수 있으므로 숫자만 더하지 않습니다.
+## 결과와 자격을 읽는 방법
 
-SAIF의 계층은 TB 전체가 아니라 `tb_project/adapter/dut`와 맞아야 합니다.
-`*_annotation.rpt`의 missing ports/nets/pins, default activity와 constant 신호를 확인합니다.
-미주석 항목이 있으면 진단값은 남기되 자동 공식 자격은 false입니다.
-항목을 0으로 채우거나 임의의 toggle 비율을 주어 통과시키지 않습니다.
-SRAM은 주소·제어·데이터 활동 및 실제 매크로 라이브러리의 power 모델을 사용합니다.
-접근 횟수 × 임의 상수를 전력으로 제출하거나 SRAM을 제외하지 않습니다.
+POWER_RUN_DIR의 power_summary.json, reports/*_activity_audit.json,
+*_annotation.rpt, *_net_activity.rpt, *_pin_activity.rpt, *_port_activity.rpt,
+pin_connectivity.tsv 및 원본 power·hierarchy 보고서를 함께 봅니다.
 
-여섯 코너 수치를 모두 제출하고 최악 total power를 별도 요약합니다. 기존 P·P·A별 상대평가와 배점은 유지합니다.
-모든 기능·SDF·공통 STA setup/hold와 activity 검토를 통과해야 공식 전력 비교 대상입니다.
-`diagnostic_worst_total_W`는 진단값이고 `qualified_worst_total_W`는 자격 미달이면 null입니다.
-기준형의 hold는 각 조가 데이터 경로에서 보정하며, 공통 SDC를 완화해서 맞추면 안 됩니다.
+- bitwise_mismatch_count: 측정 SAIF와 DC activity가 다른 net·핀·포트 레코드 수
+- disconnected_output_pin_count: 구조로 확인한 미연결 output 핀 수
+- unresolved_non_annotated_pin_count: 면제할 수 없는 미주석 핀 수
+- activity_coverage_complete: 미해결 누락과 비트별 값 불일치가 없는지 여부
+- memory_model_observation: SRAM을 포함한 memory 그룹의 원본 수치와 모델 한계 표시
+- measured_unknown_records: TX/TZ가 포함된 감사 레코드 수로, 고유 신호 비율이나 정확도 %가 아님
+- internal_W·switching_W·dynamic_W·leakage_W·total_W·energy_J: 단위가 명시된 결과
+
+여섯 시나리오의 기능·완전한 SDF·모델 검사·STA setup/hold·활동 검증, 교수자 고정 벡터의 일치와 공통 클록 조건을
+모두 만족해야 common_power_eligible=true입니다. 스코어에는 qualified_worst_energy_J를 사용합니다.
+자격이 부족하면 이 값은 null이고 diagnostic_worst_energy_J에는 진단값을 보존합니다. hold는 각 조가 set_fix_hold 및 허용된
+데이터 경로 보정으로 해결합니다. 공통 SDC를 완화하지 않습니다. gate_status가 모두 PASS여도
+STA hold 때문에 게이트 실행의 종료 코드가 1일 수 있으며 이를 전력 연결 버그와 혼동하지 않습니다.
+
+## SRAM power 모델의 한계
+
+배포 SAED32 교육용 SRAM 라이브러리에서는 SS/TT memory internal이 음수이고 leakage가 0인
+결과가 나타날 수 있습니다. 0 leakage를 실제 SRAM의 누설이 없다는 뜻으로 해석하면 안 됩니다.
+이 개정은 PDK의 특성화 값을 새로 만들거나 정확성을 보증하는 수정이 아닙니다.
+library_power_model_limitations와 memory_model_observation에 그 한계를 기록하고 원본값을 보존합니다.
+음수를 0으로 clamp하거나 누설을 임의 숫자로 바꾸거나 SRAM을 빼지 않습니다.
+기존 평가 조건에 따라 같은 라이브러리·측정 창의 전체 modeled total과 여섯 코너 값을 제출합니다.
+결과는 ideal-clock pre-CTS·pre-route 비교 추정이며 SRAM signoff 전력이 아닙니다.
 power switch는 프로젝트에서 사용하지 않습니다.
 
-이 결과는 ideal clock, pre-CTS·pre-route 추정입니다. 실제 CTS 버퍼·배선·IR-drop·열·패키지까지
-검증한 signoff power가 아닙니다. 자체 clock-gating 구현은 root clock 전달, gated FF의 clock 도달,
-gating check와 SAIF clock 활동을 별도로 증명해야 합니다.
-
-## 기존 작업에 적용
-
-v9.2 작업용 패치는 `rtl/`, `config/`, 공통 SDC, 기존 netlist·DDC·SDF를 덮어쓰지 않습니다.
-`tb/common/tb_project.v`의 활동 저장 부분과 전력 실행 파일만 업데이트합니다.
-공식 TB를 수정한 팀은 먼저 본인 변경을 따로 보관하고 깨끗한 교강사 harness로 최종 검증합니다.
-새 게이트 실행에서 `--saif`를 지정해야 하며, 예전의 전력 활동 없는 로그만으로 SAIF를 만들 수는 없습니다.
+대용량 DUT VCD를 만들므로 충분한 임시 공간을 확보합니다. 감사 후 VCD를 정리하더라도
+SAIF·원본 보고서·JSON·hash는 제출 근거로 유지합니다.

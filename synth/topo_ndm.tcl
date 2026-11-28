@@ -14,16 +14,67 @@ proc clock_setting {name default min max} {
     return $value
 }
 set clock_period_ps [clock_setting EE470_CLK_PERIOD_PS 10000 20 1000000]
-set clock_latency_ps [clock_setting EE470_CLK_LATENCY_PS 0 0 1000000]
+set clock_latency_ps [clock_setting EE470_CLK_LATENCY_PS 0 0 0]
 if {$clock_period_ps % 2} {error "EE470_CLK_PERIOD_PS must be even for 1 ps half-cycles"}
 set clock_period_ns [expr {$clock_period_ps / 1000.0}]
-set clock_latency_ns [expr {$clock_latency_ps / 1000.0}]
-set timing_run [open outputs/timing_run.txt w]
-puts $timing_run "clock_period_ps=$clock_period_ps"
-puts $timing_run "clock_latency_ps=$clock_latency_ps"
-puts $timing_run "clock_model=ideal"
-close $timing_run
-puts "EE470_CLOCK period_ps=$clock_period_ps latency_ps=$clock_latency_ps model=ideal"
+
+proc public_clock_period_ps {} {
+    set core [get_clocks -quiet CORE_CLK]
+    if {[sizeof_collection $core] != 1 || [get_object_name [get_attribute $core sources]] ne "clk"} {
+        error "CORE_CLK must remain on the public clk port"
+    }
+    foreach_in_collection clock [remove_from_collection [all_clocks] $core] {
+        set sources [get_attribute $clock sources]
+        if {[sizeof_collection $sources] && "clk" in [get_object_name $sources]} {
+            error "Declare additional clocks on internal sources; only CORE_CLK drives the public clk port"
+        }
+    }
+    set period [get_attribute $core period]
+    set ps [expr {round($period * 1000.0)}]
+    set waveform [get_attribute $core waveform]
+    if {[llength $waveform] == 1} {set waveform [lindex $waveform 0]}
+    lassign $waveform rise fall
+    if {$ps < 20 || $ps > 1000000 || $ps % 2 || abs($period * 1000.0 - $ps) > 0.001 ||
+        [llength $waveform] != 2 || abs($rise) > 0.000001 || abs($fall - $period / 2.0) > 0.000001} {
+        error "CORE_CLK requires a zero-phase 50% waveform and an even period in ps from 20 through 1000000"
+    }
+    return $ps
+}
+
+proc apply_scenario_constraints {period_ns} {
+    set clk_port [get_ports clk]
+    set inputs [remove_from_collection [all_inputs] [get_ports {clk rst_n}]]
+    create_clock -name CORE_CLK -period $period_ns $clk_port
+    if {[info exists ::env(EE470_EXTRA_SDC)] && $::env(EE470_EXTRA_SDC) ne ""} {
+        source $::env(EE470_EXTRA_SDC)
+        set core [get_clocks CORE_CLK]
+        # Reapply the public environment after the team's internal constraints.
+        remove_input_delay [all_inputs]
+        remove_output_delay [all_outputs]
+        remove_case_analysis [get_ports rst_n]
+        remove_propagated_clock $core
+        remove_propagated_clock $clk_port
+        remove_clock_latency $core
+        remove_clock_latency -source $core
+        remove_clock_latency $clk_port
+        remove_clock_latency -source $clk_port
+        remove_clock_transition $core
+    }
+    set period_ps [public_clock_period_ps]
+    set_clock_latency -source 0 [get_clocks CORE_CLK]
+    set_clock_uncertainty -setup 0.20 [all_clocks]
+    set_clock_uncertainty -hold 0.10 [all_clocks]
+    set_input_transition 0.080 [remove_from_collection [all_inputs] $clk_port]
+    set_input_delay -clock CORE_CLK -max 2.0 $inputs
+    set_input_delay -clock CORE_CLK -min 0.5 $inputs
+    set_false_path -from [get_ports rst_n]
+    set_output_delay -clock CORE_CLK -max 2.0 [all_outputs]
+    set_output_delay -clock CORE_CLK -min -0.4 [all_outputs]
+    set_load 20.0 [all_outputs]
+    set_scenario_options -setup true -hold true
+    set_fix_hold [all_clocks]
+    return $period_ps
+}
 
 proc check_project_ports {} {
     set expected {}
@@ -33,6 +84,10 @@ proc check_project_ports {} {
         out host_ready 1 out host_rdata 32 out host_error 1 out busy 1 out done 1 out trap 1
         out commit_valid 1 out commit_pc 32 out commit_insn 32 out commit_rd 5
         out commit_wdata 32 out reserved_out 8
+        in rp_aux_in0 8 in rp_aux_in1 8 in rp_aux_in2 8
+        in rp_aux_in3 8 in rp_aux_in4 8 in rp_aux_in5 8 in rp_aux_in6 8
+        out rp_aux_out0 8 out rp_aux_out1 8 out rp_aux_out2 8
+        out rp_aux_out3 8 out rp_aux_out4 8 out rp_aux_out5 8 out rp_aux_out6 8
     } {
         for {set bit 0} {$bit < $width} {incr bit} {
             set port_name $name
@@ -96,109 +151,52 @@ set_link_library_subset -top {/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/stdcell_r
 set_operating_conditions -library {saed32rvt_ss0p95v125c saed32sram_ss0p95v125c} ss0p95v125c
 set_tlu_plus_files -max_tluplus /opt/eda/pdk/saed32nm/edk/SAED32_EDK/tech/star_rcxt/saed32nm_1p9m_Cmax.tluplus -min_tluplus /opt/eda/pdk/saed32nm/edk/SAED32_EDK/tech/star_rcxt/saed32nm_1p9m_Cmax.tluplus -tech2itf_map /opt/eda/pdk/saed32nm/edk/SAED32_EDK/tech/star_rcxt/saed32nm_tf_itf_tluplus.map
 check_tlu_plus_files > reports/SS0P95V125C_CMAX_tlu.rpt
-create_clock -name CORE_CLK -period $clock_period_ns [get_ports clk]
-set_clock_latency -source $clock_latency_ns [get_clocks CORE_CLK]
-set_clock_uncertainty -setup 0.20 [get_clocks CORE_CLK]
-set_clock_uncertainty -hold 0.10 [get_clocks CORE_CLK]
-set_input_transition 0.080 [remove_from_collection [all_inputs] [get_ports clk]]
-set_input_delay -clock CORE_CLK -max 2.0 [remove_from_collection [all_inputs] [get_ports {clk rst_n}]]
-set_input_delay -clock CORE_CLK -min 0.5 [remove_from_collection [all_inputs] [get_ports {clk rst_n}]]
-set_false_path -from [get_ports rst_n]
-set_output_delay -clock CORE_CLK -max 2.0 [all_outputs]
-set_output_delay -clock CORE_CLK -min -0.4 [all_outputs]
-set_load 20.0 [all_outputs]
-set_scenario_options -setup true -hold true
-set_fix_hold [get_clocks CORE_CLK]
+lappend scenario_periods [apply_scenario_constraints $clock_period_ns]
 create_scenario SS0P95V125C_CMIN
 set_link_library_subset -top {/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/stdcell_rvt/db_nldm/saed32rvt_ss0p95v125c.db /opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/sram/db_nldm/saed32sram_ss0p95v125c.db}
 set_operating_conditions -library {saed32rvt_ss0p95v125c saed32sram_ss0p95v125c} ss0p95v125c
 set_tlu_plus_files -max_tluplus /opt/eda/pdk/saed32nm/edk/SAED32_EDK/tech/star_rcxt/saed32nm_1p9m_Cmin.tluplus -min_tluplus /opt/eda/pdk/saed32nm/edk/SAED32_EDK/tech/star_rcxt/saed32nm_1p9m_Cmin.tluplus -tech2itf_map /opt/eda/pdk/saed32nm/edk/SAED32_EDK/tech/star_rcxt/saed32nm_tf_itf_tluplus.map
 check_tlu_plus_files > reports/SS0P95V125C_CMIN_tlu.rpt
-create_clock -name CORE_CLK -period $clock_period_ns [get_ports clk]
-set_clock_latency -source $clock_latency_ns [get_clocks CORE_CLK]
-set_clock_uncertainty -setup 0.20 [get_clocks CORE_CLK]
-set_clock_uncertainty -hold 0.10 [get_clocks CORE_CLK]
-set_input_transition 0.080 [remove_from_collection [all_inputs] [get_ports clk]]
-set_input_delay -clock CORE_CLK -max 2.0 [remove_from_collection [all_inputs] [get_ports {clk rst_n}]]
-set_input_delay -clock CORE_CLK -min 0.5 [remove_from_collection [all_inputs] [get_ports {clk rst_n}]]
-set_false_path -from [get_ports rst_n]
-set_output_delay -clock CORE_CLK -max 2.0 [all_outputs]
-set_output_delay -clock CORE_CLK -min -0.4 [all_outputs]
-set_load 20.0 [all_outputs]
-set_scenario_options -setup true -hold true
-set_fix_hold [get_clocks CORE_CLK]
+lappend scenario_periods [apply_scenario_constraints $clock_period_ns]
 create_scenario TT1P05V25C_CMAX
 set_link_library_subset -top {/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/stdcell_rvt/db_nldm/saed32rvt_tt1p05v25c.db /opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/sram/db_nldm/saed32sram_tt1p05v25c.db}
 set_operating_conditions -library {saed32rvt_tt1p05v25c saed32sram_tt1p05v25c} tt1p05v25c
 set_tlu_plus_files -max_tluplus /opt/eda/pdk/saed32nm/edk/SAED32_EDK/tech/star_rcxt/saed32nm_1p9m_Cmax.tluplus -min_tluplus /opt/eda/pdk/saed32nm/edk/SAED32_EDK/tech/star_rcxt/saed32nm_1p9m_Cmax.tluplus -tech2itf_map /opt/eda/pdk/saed32nm/edk/SAED32_EDK/tech/star_rcxt/saed32nm_tf_itf_tluplus.map
 check_tlu_plus_files > reports/TT1P05V25C_CMAX_tlu.rpt
-create_clock -name CORE_CLK -period $clock_period_ns [get_ports clk]
-set_clock_latency -source $clock_latency_ns [get_clocks CORE_CLK]
-set_clock_uncertainty -setup 0.20 [get_clocks CORE_CLK]
-set_clock_uncertainty -hold 0.10 [get_clocks CORE_CLK]
-set_input_transition 0.080 [remove_from_collection [all_inputs] [get_ports clk]]
-set_input_delay -clock CORE_CLK -max 2.0 [remove_from_collection [all_inputs] [get_ports {clk rst_n}]]
-set_input_delay -clock CORE_CLK -min 0.5 [remove_from_collection [all_inputs] [get_ports {clk rst_n}]]
-set_false_path -from [get_ports rst_n]
-set_output_delay -clock CORE_CLK -max 2.0 [all_outputs]
-set_output_delay -clock CORE_CLK -min -0.4 [all_outputs]
-set_load 20.0 [all_outputs]
-set_scenario_options -setup true -hold true
-set_fix_hold [get_clocks CORE_CLK]
+lappend scenario_periods [apply_scenario_constraints $clock_period_ns]
 create_scenario TT1P05V25C_CMIN
 set_link_library_subset -top {/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/stdcell_rvt/db_nldm/saed32rvt_tt1p05v25c.db /opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/sram/db_nldm/saed32sram_tt1p05v25c.db}
 set_operating_conditions -library {saed32rvt_tt1p05v25c saed32sram_tt1p05v25c} tt1p05v25c
 set_tlu_plus_files -max_tluplus /opt/eda/pdk/saed32nm/edk/SAED32_EDK/tech/star_rcxt/saed32nm_1p9m_Cmin.tluplus -min_tluplus /opt/eda/pdk/saed32nm/edk/SAED32_EDK/tech/star_rcxt/saed32nm_1p9m_Cmin.tluplus -tech2itf_map /opt/eda/pdk/saed32nm/edk/SAED32_EDK/tech/star_rcxt/saed32nm_tf_itf_tluplus.map
 check_tlu_plus_files > reports/TT1P05V25C_CMIN_tlu.rpt
-create_clock -name CORE_CLK -period $clock_period_ns [get_ports clk]
-set_clock_latency -source $clock_latency_ns [get_clocks CORE_CLK]
-set_clock_uncertainty -setup 0.20 [get_clocks CORE_CLK]
-set_clock_uncertainty -hold 0.10 [get_clocks CORE_CLK]
-set_input_transition 0.080 [remove_from_collection [all_inputs] [get_ports clk]]
-set_input_delay -clock CORE_CLK -max 2.0 [remove_from_collection [all_inputs] [get_ports {clk rst_n}]]
-set_input_delay -clock CORE_CLK -min 0.5 [remove_from_collection [all_inputs] [get_ports {clk rst_n}]]
-set_false_path -from [get_ports rst_n]
-set_output_delay -clock CORE_CLK -max 2.0 [all_outputs]
-set_output_delay -clock CORE_CLK -min -0.4 [all_outputs]
-set_load 20.0 [all_outputs]
-set_scenario_options -setup true -hold true
-set_fix_hold [get_clocks CORE_CLK]
+lappend scenario_periods [apply_scenario_constraints $clock_period_ns]
 create_scenario FF1P16VN40C_CMAX
 set_link_library_subset -top {/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/stdcell_rvt/db_nldm/saed32rvt_ff1p16vn40c.db /opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/sram/db_nldm/saed32sram_ff1p16vn40c.db}
 set_operating_conditions -library {saed32rvt_ff1p16vn40c saed32sram_ff1p16vn40c} ff1p16vn40c
 set_tlu_plus_files -max_tluplus /opt/eda/pdk/saed32nm/edk/SAED32_EDK/tech/star_rcxt/saed32nm_1p9m_Cmax.tluplus -min_tluplus /opt/eda/pdk/saed32nm/edk/SAED32_EDK/tech/star_rcxt/saed32nm_1p9m_Cmax.tluplus -tech2itf_map /opt/eda/pdk/saed32nm/edk/SAED32_EDK/tech/star_rcxt/saed32nm_tf_itf_tluplus.map
 check_tlu_plus_files > reports/FF1P16VN40C_CMAX_tlu.rpt
-create_clock -name CORE_CLK -period $clock_period_ns [get_ports clk]
-set_clock_latency -source $clock_latency_ns [get_clocks CORE_CLK]
-set_clock_uncertainty -setup 0.20 [get_clocks CORE_CLK]
-set_clock_uncertainty -hold 0.10 [get_clocks CORE_CLK]
-set_input_transition 0.080 [remove_from_collection [all_inputs] [get_ports clk]]
-set_input_delay -clock CORE_CLK -max 2.0 [remove_from_collection [all_inputs] [get_ports {clk rst_n}]]
-set_input_delay -clock CORE_CLK -min 0.5 [remove_from_collection [all_inputs] [get_ports {clk rst_n}]]
-set_false_path -from [get_ports rst_n]
-set_output_delay -clock CORE_CLK -max 2.0 [all_outputs]
-set_output_delay -clock CORE_CLK -min -0.4 [all_outputs]
-set_load 20.0 [all_outputs]
-set_scenario_options -setup true -hold true
-set_fix_hold [get_clocks CORE_CLK]
+lappend scenario_periods [apply_scenario_constraints $clock_period_ns]
 create_scenario FF1P16VN40C_CMIN
 set_link_library_subset -top {/opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/stdcell_rvt/db_nldm/saed32rvt_ff1p16vn40c.db /opt/eda/pdk/saed32nm/edk/SAED32_EDK/lib/sram/db_nldm/saed32sram_ff1p16vn40c.db}
 set_operating_conditions -library {saed32rvt_ff1p16vn40c saed32sram_ff1p16vn40c} ff1p16vn40c
 set_tlu_plus_files -max_tluplus /opt/eda/pdk/saed32nm/edk/SAED32_EDK/tech/star_rcxt/saed32nm_1p9m_Cmin.tluplus -min_tluplus /opt/eda/pdk/saed32nm/edk/SAED32_EDK/tech/star_rcxt/saed32nm_1p9m_Cmin.tluplus -tech2itf_map /opt/eda/pdk/saed32nm/edk/SAED32_EDK/tech/star_rcxt/saed32nm_tf_itf_tluplus.map
 check_tlu_plus_files > reports/FF1P16VN40C_CMIN_tlu.rpt
-create_clock -name CORE_CLK -period $clock_period_ns [get_ports clk]
-set_clock_latency -source $clock_latency_ns [get_clocks CORE_CLK]
-set_clock_uncertainty -setup 0.20 [get_clocks CORE_CLK]
-set_clock_uncertainty -hold 0.10 [get_clocks CORE_CLK]
-set_input_transition 0.080 [remove_from_collection [all_inputs] [get_ports clk]]
-set_input_delay -clock CORE_CLK -max 2.0 [remove_from_collection [all_inputs] [get_ports {clk rst_n}]]
-set_input_delay -clock CORE_CLK -min 0.5 [remove_from_collection [all_inputs] [get_ports {clk rst_n}]]
-set_false_path -from [get_ports rst_n]
-set_output_delay -clock CORE_CLK -max 2.0 [all_outputs]
-set_output_delay -clock CORE_CLK -min -0.4 [all_outputs]
-set_load 20.0 [all_outputs]
-set_scenario_options -setup true -hold true
-set_fix_hold [get_clocks CORE_CLK]
+lappend scenario_periods [apply_scenario_constraints $clock_period_ns]
+# Gate simulation and SAIF consume the effective CORE_CLK period, including a team SDC override.
+if {[llength [lsort -unique $scenario_periods]] != 1} {
+    error "Use one submitted CORE_CLK period throughout the six scenarios"
+}
+set clock_period_ps [lindex $scenario_periods 0]
+set timing_run [open outputs/timing_run.txt w]
+puts $timing_run "clock_period_ps=$clock_period_ps"
+puts $timing_run "clock_latency_ps=$clock_latency_ps"
+puts $timing_run "clock_model=ideal"
+if {[info exists ::env(EE470_EXTRA_SDC_SHA256)]} {
+    puts $timing_run "extra_sdc_sha256=$::env(EE470_EXTRA_SDC_SHA256)"
+}
+close $timing_run
+puts "EE470_CLOCK period_ps=$clock_period_ps latency_ps=$clock_latency_ps model=ideal"
+
 # STEP 4: optimize one shared implementation. Each scenario requests set_fix_hold.
 # Teams may add hold optimization here while retaining the common SDC above.
 # Inspect all min paths after mapping. A completed compile is not timing closure.

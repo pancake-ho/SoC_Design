@@ -1,0 +1,16 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><title>v9.4.1 ICG 검증</title><style>body{font:16px/1.65 "Malgun Gothic",Arial;color:#203047;max-width:1100px;margin:32px auto;padding:0 24px}h1,h2{color:#780f1e}h1{border-left:7px solid #a80000;padding-left:14px}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid #bdc5cd;padding:10px;text-align:left}th{background:#780f1e;color:white}pre{background:#20252c;color:#eef1f4;padding:18px;white-space:pre-wrap}footer{border-top:3px solid #a80000;margin-top:26px;padding-top:10px}.callout{background:#edf6f6;padding:15px}code{font-family:Consolas,monospace}</style>
+<h1>v9.4.1 ICG 보수적 시뮬레이션 호환 수정</h1><p>2026-11-25 · biclab0 · 교강사 임시 QA 사본</p>
+<p class="callout">경고를 면제하지 않고, 음수로 역전된 검사창을 더 엄격한 창으로 복구. 원본 PDK·NDM·SDC·SDF·STA와 기능·전파 지연은 보존. Liberty 물리 재특성화 결과가 아님.</p>
+<h2>불일치와 조치</h2><p>확인한 FF CGLPPRX2_RVT의 SE 하강 한계는 setup 48 ps, hold −50 ps로 합이 −2 ps. 실행 사본에서 setup은 유지하고 hold만 −46 ps로 증가해 2 ps 검사창으로 복구. 보정량이 5 ps보다 크면 중단. 정상인 검사창은 변경하지 않음. 모든 변경값·인스턴스·핀·SHA256은 icg_timing_audit.json에 기록.</p>
+<h2>실제 시험</h2><p>ICG 6코너×21개 자극=126회. 코너별 EN/SE 상승·하강 4유형, 총 24개 위반 유형 모두 검출. 창 밖 48회 자극에서 오검출 0. 정상 GCLK 이벤트는 원본과 6코너 모두 동일. 정밀한 좁은 검사창을 건너뛰지 않도록 진단 TB의 자극은 1 fs 분해능으로 적용.</p>
+<table><tr><th>코너</th><th>ICG 시험</th><th>위반 유형 검출</th><th>창 밖 오검출</th><th>보정 column 수</th><th>SoC F12 checks</th><th>원래 hold WNS ns</th></tr><tr><td>FF1P16VN40C_CMAX</td><td>PASS</td><td>4 / 4</td><td>0</td><td>3</td><td>24287</td><td>-0.4315</td></tr><tr><td>FF1P16VN40C_CMIN</td><td>PASS</td><td>4 / 4</td><td>0</td><td>3</td><td>24287</td><td>-0.4319</td></tr><tr><td>SS0P95V125C_CMAX</td><td>PASS</td><td>4 / 4</td><td>0</td><td>0</td><td>24287</td><td>-0.3122</td></tr><tr><td>SS0P95V125C_CMIN</td><td>PASS</td><td>4 / 4</td><td>0</td><td>0</td><td>24287</td><td>-0.3133</td></tr><tr><td>TT1P05V25C_CMAX</td><td>PASS</td><td>4 / 4</td><td>0</td><td>0</td><td>24287</td><td>-0.3852</td></tr><tr><td>TT1P05V25C_CMIN</td><td>PASS</td><td>4 / 4</td><td>0</td><td>0</td><td>24287</td><td>-0.3859</td></tr></table>
+<p>SoC 게이트 F12 6코너 모두 기능 PASS, 각 24,287 checks. SDF annotation·WSUM·NTCDNC 경고와 실행 중 타이밍 위반 0. baseline의 STA hold 음수와 공식 자격 false는 유지. 일반 컴파일러 DDTC/DRTZ 메시지는 원문에 보존하며 새 예외 판정은 없음.</p>
+<h2>Uncertainty 확인</h2><p>동일한 고정 회로에서 setup·hold uncertainty를 0.1→0.3 ns로 바꾼 논리 DC 진단에서 SDF 지연·검사 레코드 12개가 동일. uncertainty 자체가 cell setup/hold 값이나 IOPATH를 덮어쓰지 않음을 확인. 더 큰 uncertainty로 재합성하면 실제 경로를 달리 최적화할 수 있으나 모델 정합성 수정과 별개.</p>
+<h2>Library Compiler의 확인 범위</h2><p>원본 CGLPPRX2_RVT 셀 본문을 변경하지 않고 진단용으로 분리한 라이브러리의 읽기·컴파일과 timing arc 보고서 생성 확인. 원본 전체 PDK의 재컴파일·재특성화 성공을 뜻하지 않으며, 진단용 DB를 공용 NDM이나 배포본에 사용하지 않음.</p>
+<h2>회귀 검사·보존</h2><p>파서·상한·미지원 형식 실패·누락/중복 검사·원본 보존·멱등성 등 11개 Python 검사 통과. 패치의 팀 RTL·config·TB·mapped netlist·원본 SDF 보존, 재적용, 변경 파일 충돌 시 중단 검사 통과. 실제 학생별 최적화 SoC 전체의 추가 실행은 미포함. 각 조는 새 패치로 게이트·SAIF를 재실행해야 함.</p>
+<h2>재실행</h2><pre>python3 tools/v9_4_1/apply_icg.py --check
+python3 tools/v9_4_1/apply_icg.py --apply
+python3 synth/gate_timing.py --saif
+python3 synth/power_saif.py --gate-run /실제/GATE_RUN_DIR</pre>
+<p>v9.4 작업에 이 호환 패치만 적용하면 재합성 불필요. RTL을 바꿨거나 v9.1 reset 수정 전 netlist이면 재합성 필요. 공통 SDC를 완화하지 않고 각 조가 hold를 보정해야 함.</p>
+<footer>EE470 SoC Design · 기술 검증 보고 · 원본 증거는 교강사 검토용으로 별도 회수</footer></html>
